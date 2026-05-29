@@ -195,6 +195,9 @@
         .paylater-wrapper::before { content: ''; position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; background: radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%); border-radius: 50%; pointer-events: none; }
         .paylater-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; position: relative; z-index: 1; }
         .paylater-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid var(--danger); backdrop-filter: blur(10px); transition: transform 0.2s ease; margin-bottom: 0.75rem; }
+        .paylater-progress { height: 4px; background: rgba(255,255,255,0.1); border-radius: 99px; margin-top: 0.45rem; overflow: hidden; }
+        .paylater-progress-fill { height: 100%; background: linear-gradient(90deg, #34d399, #10b981); border-radius: 99px; transition: width 0.4s ease; }
+        .paylater-actions { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; }
 
         .form-group { margin-bottom: 1.25rem; position: relative; text-align: left; }
         label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted); }
@@ -911,6 +914,49 @@
             </div>
         </div>
     </div>
+    <div id="payoffModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('payoffModal')">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h2>💳 Bayar Tagihan</h2>
+                <button class="modal-close" onclick="App.UI.closeModal('payoffModal')">&times;</button>
+            </div>
+            <input type="hidden" id="payoffId">
+            <div style="background:rgba(239,68,68,0.07); border:1px solid rgba(239,68,68,0.2); border-radius:var(--radius-md); padding:0.75rem 1rem; margin-bottom:1rem;">
+                <div class="text-xs text-muted" style="margin-bottom:0.2rem;">Tagihan</div>
+                <div class="font-bold" id="payoffNama" style="font-size:1rem;"></div>
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.2rem;">
+                    <span class="text-xs text-muted">Sisa hutang:</span>
+                    <span class="font-bold text-danger" id="payoffSisa"></span>
+                </div>
+            </div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Bayar dari Akun</label>
+                    <select id="payoffAkun">
+                        <option value="cash">💵 Cash / Tunai</option>
+                        <option value="saldo">🪪 Saldo Bank</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Tanggal Bayar</label>
+                    <input type="date" id="payoffTanggal">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Jumlah Dibayar (Rp)</label>
+                <input type="text" id="payoffJumlah" inputmode="numeric" oninput="App.Utils.formatInput(this)">
+            </div>
+            <div class="form-group">
+                <label>Keterangan (opsional)</label>
+                <input type="text" id="payoffCatatan" placeholder="Cth: Lunas GoPaylater Mei">
+            </div>
+            <div style="display:flex; gap:0.5rem; flex-direction:column;">
+                <button id="payoffFullBtn" class="btn btn-primary" style="background:linear-gradient(135deg,#10b981,#059669);">✅ Tandai LUNAS Sepenuhnya</button>
+                <button id="payoffPartBtn" class="btn" style="background:var(--warning-light); color:var(--warning-dark); font-weight:700;">💸 Bayar Sebagian</button>
+                <button class="btn btn-secondary" onclick="App.UI.closeModal('payoffModal')">Batal</button>
+            </div>
+        </div>
+    </div>
     <div id="catModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('catModal')"><div class="modal-content" style="max-width: 400px;"><div class="modal-header"><h2>Kategori Baru</h2><button class="modal-close" onclick="App.UI.closeModal('catModal')">&times;</button></div><div class="form-group"><label>Nama</label><input type="text" id="catName" required></div><div class="form-group"><label>Ikon (Emoji)</label><input type="text" id="catIcon" required maxlength="2"></div><div class="grid-2"><button class="btn btn-secondary" onclick="App.UI.closeModal('catModal')">Batal</button><button class="btn btn-primary" onclick="App.Handlers.addCategory()">Simpan</button></div></div></div>
     <div id="paylaterModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('paylaterModal')"><div class="modal-content"><div class="modal-header"><h2>Tagihan Baru</h2><button class="modal-close" onclick="App.UI.closeModal('paylaterModal')">&times;</button></div><form onsubmit="App.Handlers.addPaylater(event)"><div class="form-group"><label>Nama Tagihan</label><input type="text" id="plName" required></div><div class="form-group"><label>Jumlah (Rp)</label><input type="text" id="plAmount" required inputmode="numeric" oninput="App.Utils.formatInput(this)"></div><div class="grid-2"><button type="button" class="btn btn-secondary" onclick="App.UI.closeModal('paylaterModal')">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div></form></div></div>
 
@@ -1513,9 +1559,24 @@
                     let total = 0;
                     list.innerHTML = App.State.paylaters.map(p => {
                         total += p.amount;
+                        const orig = p.originalAmount || p.amount;
+                        const paid = orig - p.amount;
+                        const perc = orig > 0 ? Math.round((paid / orig) * 100) : 0;
+                        const hasProgress = paid > 0;
                         return `<div class="paylater-item">
-                            <div><div style="font-weight: 600; font-size: 0.875rem;">${p.name}</div><div style="color: #fecdd3; font-weight: 800; font-size: 1.1rem; margin-top: 0.25rem;">${App.Utils.formatCurrency(p.amount)}</div></div>
-                            <button class="btn btn-icon" style="background:rgba(239,68,68,0.2); color:#fca5a5; width:36px; height:36px; font-size:0.875rem;" onclick="App.Handlers.deletePaylater(${p.id})" title="Tandai Lunas">✔</button>
+                            <div style="flex:1; min-width:0;">
+                                <div style="font-weight:600; font-size:0.875rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.name}</div>
+                                <div style="margin-top:0.2rem;">
+                                    <span style="color:#fecdd3; font-weight:800; font-size:1.05rem;">${App.Utils.formatCurrency(p.amount)}</span>
+                                    ${hasProgress ? `<span style="color:rgba(255,255,255,0.4); font-size:0.7rem; margin-left:0.4rem;">dari ${App.Utils.formatCurrency(orig)}</span>` : ''}
+                                </div>
+                                ${hasProgress ? `<div class="paylater-progress"><div class="paylater-progress-fill" style="width:${perc}%"></div></div>
+                                <div style="font-size:0.65rem; color:rgba(255,255,255,0.4); margin-top:0.2rem;">${perc}% sudah dibayar</div>` : ''}
+                            </div>
+                            <div class="paylater-actions">
+                                <button class="btn btn-sm" style="background:rgba(52,211,153,0.2); color:#34d399; padding:0.35rem 0.65rem; font-size:0.75rem; font-weight:700; border-radius:8px;" onclick="App.Handlers.openPayoffModal(${p.id})" title="Bayar / Lunas">💳 Bayar</button>
+                                <button class="btn btn-icon" style="background:rgba(239,68,68,0.15); color:#fca5a5; width:30px; height:30px; font-size:0.75rem;" onclick="App.Handlers.deletePaylater(${p.id})" title="Hapus tanpa mencatat pembayaran">🗑️</button>
+                            </div>
                         </div>`;
                     }).join('');
                     if(totalEl) totalEl.textContent = App.Utils.formatCurrency(total);
@@ -1740,9 +1801,56 @@
                 addPaylater(e) {
                     e.preventDefault(); const name = document.getElementById('plName').value.trim(); const amt = App.Utils.parseCurrency(document.getElementById('plAmount').value);
                     if(!name || amt <= 0) return App.UI.showToast('Form tidak valid', 'error');
-                    App.State.paylaters.push({id: Date.now(), name, amount: amt}); App.DB.save(); App.UI.renderPaylaters(); App.UI.closeModal('paylaterModal'); e.target.reset(); App.UI.showToast('Tagihan berhasil disimpan!', 'success');
+                    App.State.paylaters.push({id: Date.now(), name, amount: amt, originalAmount: amt}); App.DB.save(); App.UI.renderPaylaters(); App.UI.closeModal('paylaterModal'); e.target.reset(); App.UI.showToast('Tagihan berhasil disimpan!', 'success');
                 },
-                async deletePaylater(id) { const yes = await App.UI.confirm('Tandai tagihan lunas/dihapus secara permanen?'); if(!yes) return; App.State.paylaters = App.State.paylaters.filter(p => p.id !== id); App.DB.save(); App.UI.renderPaylaters(); App.UI.showToast('Tagihan diselesaikan!', 'success'); },
+                async deletePaylater(id) {
+                    const yes = await App.UI.confirm('Hapus tagihan ini tanpa mencatat pembayaran?');
+                    if(!yes) return;
+                    App.State.paylaters = App.State.paylaters.filter(p => p.id !== id);
+                    App.DB.save(); App.UI.renderPaylaters(); App.UI.showToast('Tagihan dihapus.', 'success');
+                },
+                openPayoffModal(id) {
+                    const p = App.State.paylaters.find(x => x.id === id); if(!p) return;
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('payoffId').value = id;
+                    document.getElementById('payoffNama').textContent = p.name;
+                    document.getElementById('payoffSisa').textContent = App.Utils.formatCurrency(p.amount);
+                    document.getElementById('payoffJumlah').value = p.amount.toLocaleString('id-ID');
+                    document.getElementById('payoffTanggal').value = today;
+                    document.getElementById('payoffAkun').value = 'cash';
+                    document.getElementById('payoffCatatan').value = `Lunas: ${p.name}`;
+                    document.getElementById('payoffFullBtn').onclick  = () => App.Handlers.submitPayoff('full');
+                    document.getElementById('payoffPartBtn').onclick  = () => App.Handlers.submitPayoff('partial');
+                    App.UI.showModal('payoffModal');
+                },
+                submitPayoff(mode) {
+                    const id      = parseInt(document.getElementById('payoffId').value);
+                    const akun    = document.getElementById('payoffAkun').value;
+                    const tanggal = document.getElementById('payoffTanggal').value;
+                    const catatan = document.getElementById('payoffCatatan').value.trim();
+                    const jumlah  = App.Utils.parseCurrency(document.getElementById('payoffJumlah').value);
+                    const p = App.State.paylaters.find(x => x.id === id); if(!p) return;
+                    if(!jumlah || jumlah <= 0) return App.UI.showToast('Masukkan jumlah yang valid', 'error');
+                    if(jumlah > p.amount) return App.UI.showToast('Jumlah melebihi sisa tagihan!', 'error');
+                    if(!tanggal) return App.UI.showToast('Pilih tanggal pembayaran', 'error');
+                    // Catat sebagai pengeluaran di history
+                    App.State.transactions.push({
+                        id: Date.now(), tanggal, jenisAkun: akun,
+                        pemasukan: 0, pengeluaran: jumlah,
+                        kategori: 'lainnya', keterangan: catatan
+                    });
+                    const isFullyPaid = mode === 'full' || jumlah >= p.amount;
+                    if(isFullyPaid) {
+                        App.State.paylaters = App.State.paylaters.filter(x => x.id !== id);
+                        App.UI.closeModal('payoffModal');
+                        App.UI.showToast(`🎉 Tagihan "${p.name}" LUNAS! Tercatat di riwayat.`, 'success');
+                    } else {
+                        p.amount -= jumlah;
+                        App.UI.closeModal('payoffModal');
+                        App.UI.showToast(`✅ Bayar ${App.Utils.formatCurrency(jumlah)} tercatat. Sisa: ${App.Utils.formatCurrency(p.amount)}`, 'success');
+                    }
+                    App.DB.save(); App.UI.renderAll();
+                },
                 openEdit(id) {
                     const t = App.State.transactions.find(x => x.id === id); if(!t) return;
                     document.getElementById('edit-id').value = id; document.getElementById('edit-tanggal').value = t.tanggal; document.getElementById('edit-jenis-akun').value = t.jenisAkun; document.getElementById('edit-pemasukan').value = t.pemasukan ? t.pemasukan.toLocaleString('id-ID') : ''; document.getElementById('edit-pengeluaran').value = t.pengeluaran ? t.pengeluaran.toLocaleString('id-ID') : ''; document.getElementById('edit-kategori').value = t.kategori; document.getElementById('edit-keterangan').value = t.keterangan || '';
