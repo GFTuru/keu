@@ -827,6 +827,21 @@
     <!-- Modals for Budget, Goal, Category, Paylater -->
     <div id="budgetModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('budgetModal')"><div class="modal-content"><div class="modal-header"><h2>Atur Limit Budget</h2><button class="modal-close" onclick="App.UI.closeModal('budgetModal')">&times;</button></div><form onsubmit="App.Handlers.addBudget(event)"><div class="form-group"><label>Kategori</label><select id="bCategory" required></select></div><div class="form-group"><label>Batas (Rp)</label><input type="text" id="bAmount" required inputmode="numeric" oninput="App.Utils.formatInput(this)"></div><div class="form-group"><label>Periode</label><select id="bPeriod" required><option value="monthly">Bulanan</option><option value="weekly">Mingguan</option></select></div><div class="grid-2"><button type="button" class="btn btn-secondary" onclick="App.UI.closeModal('budgetModal')">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div></form></div></div>
     <div id="goalModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('goalModal')"><div class="modal-content"><div class="modal-header"><h2>Target Impian</h2><button class="modal-close" onclick="App.UI.closeModal('goalModal')">&times;</button></div><form onsubmit="App.Handlers.addGoal(event)"><div class="grid-2"><div class="form-group"><label>Nama</label><input type="text" id="gName" required></div><div class="form-group"><label>Ikon</label><input type="text" id="gIcon" placeholder="📱" required maxlength="2"></div></div><div class="form-group"><label>Target Dana (Rp)</label><input type="text" id="gTarget" required inputmode="numeric" oninput="App.Utils.formatInput(this)"></div><div class="form-group"><label>Terkumpul (Rp)</label><input type="text" id="gCurrent" placeholder="0" inputmode="numeric" oninput="App.Utils.formatInput(this)"></div><div class="form-group"><label>Tenggat Waktu</label><input type="date" id="gDate" required></div><div class="grid-2"><button type="button" class="btn btn-secondary" onclick="App.UI.closeModal('goalModal')">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div></form></div></div>
+    <div id="addFundModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('addFundModal')">
+        <div class="modal-content" style="max-width:380px;">
+            <div class="modal-header"><h2>💰 Tambah Dana</h2><button class="modal-close" onclick="App.UI.closeModal('addFundModal')">&times;</button></div>
+            <div id="addFundGoalName" class="text-sm text-muted" style="margin-bottom:1rem;"></div>
+            <div class="form-group">
+                <label>Jumlah Dana (Rp)</label>
+                <input type="text" id="addFundAmount" inputmode="numeric" oninput="App.Utils.formatInput(this)" placeholder="0" required>
+            </div>
+            <input type="hidden" id="addFundGoalId">
+            <div class="grid-2">
+                <button class="btn btn-secondary" onclick="App.UI.closeModal('addFundModal')">Batal</button>
+                <button class="btn btn-primary" onclick="App.Handlers.submitAddFund()">Tabung 💚</button>
+            </div>
+        </div>
+    </div>
     <div id="catModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('catModal')"><div class="modal-content" style="max-width: 400px;"><div class="modal-header"><h2>Kategori Baru</h2><button class="modal-close" onclick="App.UI.closeModal('catModal')">&times;</button></div><div class="form-group"><label>Nama</label><input type="text" id="catName" required></div><div class="form-group"><label>Ikon (Emoji)</label><input type="text" id="catIcon" required maxlength="2"></div><div class="grid-2"><button class="btn btn-secondary" onclick="App.UI.closeModal('catModal')">Batal</button><button class="btn btn-primary" onclick="App.Handlers.addCategory()">Simpan</button></div></div></div>
     <div id="paylaterModal" class="modal-overlay" onclick="if(event.target===this) App.UI.closeModal('paylaterModal')"><div class="modal-content"><div class="modal-header"><h2>Tagihan Baru</h2><button class="modal-close" onclick="App.UI.closeModal('paylaterModal')">&times;</button></div><form onsubmit="App.Handlers.addPaylater(event)"><div class="form-group"><label>Nama Tagihan</label><input type="text" id="plName" required></div><div class="form-group"><label>Jumlah (Rp)</label><input type="text" id="plAmount" required inputmode="numeric" oninput="App.Utils.formatInput(this)"></div><div class="grid-2"><button type="button" class="btn btn-secondary" onclick="App.UI.closeModal('paylaterModal')">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div></form></div></div>
 
@@ -1528,7 +1543,10 @@
                                     <div style="width:40px;height:40px;background:var(--bg-surface-hover);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;">${g.icon}</div>
                                     <div><div class="font-bold text-sm">${g.name} ${isDone?'🏆':''}</div><div class="text-xs text-muted">${statusText}</div></div>
                                 </div>
-                                <button class="btn btn-icon text-danger" style="background:none;" onclick="App.Handlers.deleteGoal(${g.id})">🗑️</button>
+                                <div style="display:flex;gap:0.35rem;align-items:center;">
+                                    <button class="btn btn-sm" style="background:var(--success-light);color:var(--success-dark);font-size:0.75rem;padding:0.3rem 0.65rem;border-radius:8px;font-weight:700;" onclick="App.Handlers.openAddFundModal(${g.id})">+ Tabung</button>
+                                    <button class="btn btn-icon text-danger" style="background:none;" onclick="App.Handlers.deleteGoal(${g.id})">🗑️</button>
+                                </div>
                             </div>
                             <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem;" class="text-xs font-bold">
                                 <span>${App.Utils.formatCurrency(g.current)}</span><span class="text-muted">${App.Utils.formatCurrency(g.target)}</span>
@@ -1647,6 +1665,23 @@
                 openGoalModal() { if (!App.State.isPremium && App.State.goals.length >= App.Config.FreeLimits.goal) { App.UI.showModal('premiumModal'); return; } App.UI.showModal('goalModal'); },
                 addGoal(e) { e.preventDefault(); const name = document.getElementById('gName').value.trim(); const icon = document.getElementById('gIcon').value.trim(); const target = App.Utils.parseCurrency(document.getElementById('gTarget').value); const current = App.Utils.parseCurrency(document.getElementById('gCurrent').value); const date = document.getElementById('gDate').value; if(!name || target <= 0) return App.UI.showToast('Form tidak valid', 'error'); App.State.goals.push({ id: Date.now(), name, icon, target, current, date }); App.DB.save(); App.UI.renderGoals(); App.UI.closeModal('goalModal'); e.target.reset(); App.UI.showToast('Target Impian Dibuat! 🎯', 'success'); },
                 async deleteGoal(id) { const yes = await App.UI.confirm('Hapus target ini? Saldo tabungan tidak akan hilang dari transaksi.'); if(!yes) return; App.State.goals = App.State.goals.filter(g => g.id !== id); App.DB.save(); App.UI.renderGoals(); },
+                openAddFundModal(id) {
+                    const goal = App.State.goals.find(g => g.id === id); if(!goal) return;
+                    document.getElementById('addFundGoalId').value = id;
+                    document.getElementById('addFundGoalName').textContent = `${goal.icon} ${goal.name} — Terkumpul: ${App.Utils.formatCurrency(goal.current)} / ${App.Utils.formatCurrency(goal.target)}`;
+                    document.getElementById('addFundAmount').value = '';
+                    App.UI.showModal('addFundModal');
+                },
+                submitAddFund() {
+                    const id = parseInt(document.getElementById('addFundGoalId').value);
+                    const amount = App.Utils.parseCurrency(document.getElementById('addFundAmount').value);
+                    if(!amount || amount <= 0) return App.UI.showToast('Masukkan jumlah yang valid', 'error');
+                    const goal = App.State.goals.find(g => g.id === id); if(!goal) return;
+                    goal.current = (goal.current || 0) + amount;
+                    App.DB.save(); App.UI.renderGoals(); App.UI.closeModal('addFundModal');
+                    const isDone = goal.current >= goal.target;
+                    App.UI.showToast(isDone ? `🏆 Target ${goal.name} tercapai!` : `✅ +${App.Utils.formatCurrency(amount)} ditambahkan ke ${goal.name}`, 'success');
+                },
                 
                 addCategory() { const name = document.getElementById('catName').value.trim(); const icon = document.getElementById('catIcon').value.trim(); const id = name.toLowerCase().replace(/\s+/g, '-'); if(!name || !icon) return App.UI.showToast('Isi form!', 'error'); App.State.customCategories.push({id, name, icon}); App.DB.save(); App.UI.renderCategoriesSelect(); App.UI.renderSettings(); App.UI.closeModal('catModal'); },
                 async deleteCategory(id) { const yes = await App.UI.confirm('Hapus kategori kustom ini?'); if(!yes) return; App.State.customCategories = App.State.customCategories.filter(c => c.id !== id); App.DB.save(); App.UI.renderCategoriesSelect(); App.UI.renderSettings(); },
