@@ -1019,6 +1019,14 @@
                 <div class="form-group"><label>Jumlah (Rp)</label><input type="text" id="debtJumlah" inputmode="numeric" oninput="App.Utils.formatInput(this)" required></div>
                 <div class="form-group"><label>Tanggal</label><input type="date" id="debtTanggal"></div>
             </div>
+            <div class="form-group">
+                <label id="debtAkunLabel">Masuk ke Akun</label>
+                <select id="debtAkun">
+                    <option value="cash">💵 Cash / Tunai</option>
+                    <option value="saldo">🪪 Saldo Bank / E-Wallet</option>
+                </select>
+                <p id="debtAkunHint" class="text-xs text-muted" style="margin-top:0.35rem;">Uang pinjaman diterima ke akun mana? Saldo akun ini akan <b>bertambah</b>.</p>
+            </div>
             <div class="form-group"><label>Catatan (opsional)</label><input type="text" id="debtCatatan" placeholder="Cth: Pinjam buat bayar SPP"></div>
             <div class="grid-2">
                 <button class="btn btn-secondary" onclick="App.UI.closeModal('debtModal')">Batal</button>
@@ -1586,7 +1594,7 @@
                     const today = new Date().toISOString().split('T')[0]; document.getElementById('txDate').value = today;
                     if(document.getElementById('tfTanggal')) document.getElementById('tfTanggal').value = today;
                     if(document.getElementById('debtTanggal')) document.getElementById('debtTanggal').value = today;
-                    const d = new Date(); document.getElementById('filterStart').value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; document.getElementById('filterEnd').value = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0];
+                    // Filter tanggal dibiarkan kosong agar semua history tampil
                     const dateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
                     const dateEl = document.getElementById('currentDateStr'); if (dateEl) dateEl.textContent = dateStr;
                     this.renderCategoriesSelect();
@@ -2005,7 +2013,7 @@
                 },
                 async deleteTx(id) { const yes = await App.UI.confirm('Transaksi ini akan dihapus secara permanen.'); if(!yes) return; App.State.transactions = App.State.transactions.filter(t => t.id !== id); App.DB.save(); App.UI.closeModal('editModal'); App.UI.renderAll(); App.UI.showToast('Transaksi Dihapus', 'success'); },
                 debounceSearch() { clearTimeout(App.State.searchTimer); App.State.searchTimer = setTimeout(() => App.UI.renderHistory(), 300); },
-                resetFilters() { const d = new Date(); document.getElementById('filterStart').value = new Date(d.getFullYear(), d.getMonth(), 1).toISOString().split('T')[0]; document.getElementById('filterEnd').value = new Date(d.getFullYear(), d.getMonth() + 1, 0).toISOString().split('T')[0]; document.getElementById('filterSearch').value = ''; document.getElementById('filterCategory').value = ''; document.getElementById('filterAccount').value = ''; document.getElementById('filterType').value = 'all'; App.UI.renderHistory(); },
+                resetFilters() { document.getElementById('filterStart').value = ''; document.getElementById('filterEnd').value = ''; document.getElementById('filterSearch').value = ''; document.getElementById('filterCategory').value = ''; document.getElementById('filterAccount').value = ''; document.getElementById('filterType').value = 'all'; App.UI.renderHistory(); },
                 
                 openBudgetModal() { if (!App.State.isPremium && App.State.budgets.length >= App.Config.FreeLimits.budget) { App.UI.showModal('premiumModal'); return; } App.UI.showModal('budgetModal'); },
                 addBudget(e) { e.preventDefault(); const category = document.getElementById('bCategory').value; const amount = App.Utils.parseCurrency(document.getElementById('bAmount').value); const period = document.getElementById('bPeriod').value; if(amount <= 0) return App.UI.showToast('Isi limit yang valid', 'error'); const existing = App.State.budgets.findIndex(b => b.category === category); if(existing > -1) App.State.budgets[existing] = { id: App.State.budgets[existing].id, category, amount, period }; else App.State.budgets.push({ id: Date.now(), category, amount, period }); App.DB.save(); App.UI.renderBudgets(); App.UI.closeModal('budgetModal'); e.target.reset(); App.UI.showToast('Budget tersimpan!', 'success'); },
@@ -2087,21 +2095,39 @@
                     document.getElementById('debtNamaLabel').textContent = isUtang
                         ? 'Nama Pemberi Pinjaman / Konteks'
                         : 'Nama Orang yang Berhutang ke Kamu';
+                    document.getElementById('debtAkunLabel').textContent = isUtang
+                        ? 'Masuk ke Akun (kamu terima uang)'
+                        : 'Keluar dari Akun (kamu keluarkan uang)';
+                    document.getElementById('debtAkunHint').innerHTML = isUtang
+                        ? 'Uang pinjaman diterima ke akun mana? Saldo akun ini akan <b>bertambah</b>.'
+                        : 'Uang dipinjamkan dari akun mana? Saldo akun ini akan <b>berkurang</b>.';
                 },
                 saveDebt() {
                     const tipe   = document.querySelector('input[name="debtType"]:checked').value;
                     const nama   = document.getElementById('debtNama').value.trim();
                     const jumlah = App.Utils.parseCurrency(document.getElementById('debtJumlah').value);
                     const tgl    = document.getElementById('debtTanggal').value;
+                    const akun   = document.getElementById('debtAkun').value;
                     const cat    = document.getElementById('debtCatatan').value.trim();
                     if(!nama) return App.UI.showToast('Nama wajib diisi!', 'error');
                     if(!jumlah || jumlah <= 0) return App.UI.showToast('Masukkan jumlah yang valid', 'error');
-                    App.State.debts.push({ id: Date.now(), tipe, nama, sisa: jumlah, originalAmount: jumlah, tanggal: tgl, catatan: cat });
-                    App.DB.save(); App.UI.renderDebts(); App.UI.closeModal('debtModal');
+                    if(!tgl) return App.UI.showToast('Pilih tanggal', 'error');
+                    const isUtang = tipe === 'utang';
+                    // Hutang = terima uang (pemasukan), Piutang = keluarkan uang (pengeluaran)
+                    App.State.transactions.push({
+                        id: Date.now(), tanggal: tgl, jenisAkun: akun,
+                        pemasukan:   isUtang ? jumlah : 0,
+                        pengeluaran: isUtang ? 0 : jumlah,
+                        kategori: 'lainnya',
+                        keterangan: cat || (isUtang ? `Terima hutang dari ${nama}` : `Piutang ke ${nama}`),
+                        _source: isUtang ? 'debt-utang' : 'debt-piutang'
+                    });
+                    App.State.debts.push({ id: Date.now() + 1, tipe, nama, sisa: jumlah, originalAmount: jumlah, tanggal: tgl, catatan: cat, akun });
+                    App.DB.save(); App.UI.renderAll(); App.UI.closeModal('debtModal');
                     document.getElementById('debtNama').value = '';
                     document.getElementById('debtJumlah').value = '';
                     document.getElementById('debtCatatan').value = '';
-                    App.UI.showToast(`${tipe === 'utang' ? '🔴 Hutang' : '🟢 Piutang'} berhasil dicatat!`, 'success');
+                    App.UI.showToast(`${isUtang ? '🔴 Hutang dicatat — saldo bertambah!' : '🟢 Piutang dicatat — saldo berkurang!'}`, 'success');
                 },
                 openSettleDebt(id) {
                     const d = App.State.debts.find(x => x.id === id); if(!d) return;
