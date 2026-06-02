@@ -2161,7 +2161,9 @@
                     const yes = await App.UI.confirm('Hapus catatan ini tanpa mencatat pembayaran?'); if(!yes) return;
                     App.State.debts = App.State.debts.filter(d => d.id !== id);
                     App.DB.save(); App.UI.renderDebts();
-                }, const name = document.getElementById('catName').value.trim(); const icon = document.getElementById('catIcon').value.trim(); const id = name.toLowerCase().replace(/\s+/g, '-'); if(!name || !icon) return App.UI.showToast('Isi form!', 'error'); App.State.customCategories.push({id, name, icon}); App.DB.save(); App.UI.renderCategoriesSelect(); App.UI.renderSettings(); App.UI.closeModal('catModal'); },
+                },
+
+                addCategory() { const name = document.getElementById('catName').value.trim(); const icon = document.getElementById('catIcon').value.trim(); const id = name.toLowerCase().replace(/\s+/g, '-'); if(!name || !icon) return App.UI.showToast('Isi form!', 'error'); App.State.customCategories.push({id, name, icon}); App.DB.save(); App.UI.renderCategoriesSelect(); App.UI.renderSettings(); App.UI.closeModal('catModal'); },
                 async deleteCategory(id) { const yes = await App.UI.confirm('Hapus kategori kustom ini?'); if(!yes) return; App.State.customCategories = App.State.customCategories.filter(c => c.id !== id); App.DB.save(); App.UI.renderCategoriesSelect(); App.UI.renderSettings(); },
                 
                 toggleRecurring(id) { const r = App.State.recurring.find(x => x.id === id); if(r) { r.status = r.status === 'paused' ? 'active' : 'paused'; App.DB.save(); App.UI.renderSettings(); } },
