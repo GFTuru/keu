@@ -787,6 +787,16 @@
                 </div>
 
                 <div class="form-group" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
+                    <!-- Status Bar Notifikasi -->
+                    <div id="notifStatusBar" style="display:flex; align-items:center; gap:0.75rem; padding:0.75rem 1rem; border-radius:var(--radius-md); margin-bottom:1rem; border:1px solid var(--border-medium); background:var(--bg-body);">
+                        <div id="notifStatusDot" style="width:10px; height:10px; border-radius:50%; flex-shrink:0; background:#9ca3af;"></div>
+                        <div style="flex:1;">
+                            <div class="text-sm font-bold" id="notifStatusText">Mengecek status notifikasi...</div>
+                            <div class="text-xs text-muted" id="notifStatusSub"></div>
+                        </div>
+                        <button id="notifPermBtn" class="btn btn-primary btn-sm" onclick="App.Handlers.requestNotifPermission()" style="display:none; flex-shrink:0;">Izinkan</button>
+                    </div>
+
                     <label class="switch-wrapper">
                         <div><span class="font-bold">🔔 Notifikasi Harian</span><p class="text-xs text-muted" style="margin:0.1rem 0 0;">Ingatkan catat transaksi di malam hari</p></div>
                         <input type="checkbox" id="setReminder" onchange="document.getElementById('setReminderTimeWrap').style.display = this.checked ? 'block' : 'none'; App.Handlers.saveReminder();">
@@ -1568,11 +1578,15 @@
                     }, (error) => { console.error("Firebase DB Error:", error); App.UI.updateSyncStatus('error'); });
                 },
                 save() {
-                    if (!App.State.user) return;
-                    const dataToSave = { isPremium: App.State.isPremium, transactions: App.State.transactions, recurring: App.State.recurring, customCategories: App.State.customCategories, goals: App.State.goals, budgets: App.State.budgets, paylaters: App.State.paylaters, transfers: App.State.transfers, debts: App.State.debts, settings: App.State.settings, updatedAt: new Date().toISOString() };
-                    if (App.Auth.isDummy) { localStorage.setItem('dummy_db_' + App.State.user.uid, JSON.stringify(dataToSave)); return; }
-                    if (this.dbInstance) { set(ref(this.dbInstance, `users/${App.State.user.uid}/appData`), dataToSave); }
-                }
+                   if (!App.State.user) return;
+                   const dataToSave = { isPremium: App.State.isPremium, transactions: App.State.transactions, recurring: App.State.recurring, customCategories: App.State.customCategories, goals: App.State.goals, budgets: App.State.budgets, paylaters: App.State.paylaters, transfers: App.State.transfers, debts: App.State.debts, settings: App.State.settings, updatedAt: new Date().toISOString() };
+    
+                 // ✅ Selalu backup settings ke backup_v6 agar persist saat refresh
+                   localStorage.setItem('backup_v6', JSON.stringify({ settings: App.State.settings }));
+    
+                   if (App.Auth.isDummy) { localStorage.setItem('dummy_db_' + App.State.user.uid, JSON.stringify(dataToSave)); return; }
+                   if (this.dbInstance) { set(ref(this.dbInstance, `users/${App.State.user.uid}/appData`), dataToSave); }
+              }
             },
 
             Theme: {
@@ -2226,6 +2240,49 @@
                     if(added > 0) { App.DB.save(); App.UI.showToast(`✨ ${added} Transaksi otomatis ditambahkan!`, 'success'); }
                 },
 
+                updateNotifStatus() {
+                    const dot  = document.getElementById('notifStatusDot');
+                    const text = document.getElementById('notifStatusText');
+                    const sub  = document.getElementById('notifStatusSub');
+                    const btn  = document.getElementById('notifPermBtn');
+                    if(!dot || !text) return;
+                    if(!('Notification' in window)) {
+                        dot.style.background = '#9ca3af';
+                        text.textContent = 'Browser tidak mendukung notifikasi';
+                        sub.textContent  = 'Coba buka di Chrome atau Firefox.';
+                        return;
+                    }
+                    const p = Notification.permission;
+                    if(p === 'granted') {
+                        dot.style.background = '#10b981';
+                        text.textContent = '✅ Notifikasi diizinkan';
+                        sub.textContent  = 'Aktifkan toggle di bawah untuk mengatur jadwal.';
+                        if(btn) btn.style.display = 'none';
+                    } else if(p === 'denied') {
+                        dot.style.background = '#ef4444';
+                        text.textContent = '🚫 Notifikasi diblokir browser';
+                        sub.textContent  = 'Klik ikon 🔒 di address bar → Izinkan Notifikasi, lalu refresh halaman.';
+                        if(btn) btn.style.display = 'none';
+                    } else {
+                        dot.style.background = '#f59e0b';
+                        text.textContent = '⚠️ Izin notifikasi belum diberikan';
+                        sub.textContent  = 'Klik tombol "Izinkan" untuk mengaktifkan.';
+                        if(btn) btn.style.display = 'inline-flex';
+                    }
+                },
+                requestNotifPermission() {
+                    if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
+                    // Harus dipanggil langsung dari user click — jangan di dalam setTimeout/promise chain
+                    Notification.requestPermission().then(permission => {
+                        App.Handlers.updateNotifStatus();
+                        if(permission === 'granted') {
+                            App.Handlers.syncSWState();
+                            App.UI.showToast('✅ Notifikasi berhasil diaktifkan!', 'success');
+                        } else if(permission === 'denied') {
+                            App.UI.showToast('Notifikasi diblokir. Aktifkan manual di pengaturan browser.', 'error');
+                        }
+                    });
+                },
                 saveReminder() {
                     const s = App.State.settings;
                     s.reminderEnabled    = document.getElementById('setReminder').checked;
@@ -2234,10 +2291,26 @@
                     s.morningTime        = document.getElementById('setMorningTime')?.value || '08:00';
                     s.budgetAlertEnabled = document.getElementById('setBudgetAlert')?.checked || false;
                     if(App.DB.dbInstance) App.DB.save();
+                    // Cek apakah izin sudah ada — kalau belum, arahkan ke tombol Izinkan
                     if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
-                    Notification.requestPermission().then(p => {
-                        if(p !== 'granted') return App.UI.showToast('Izin notifikasi ditolak', 'error');
-                        App.Handlers.syncSWState();
+                    if(Notification.permission !== 'granted') {
+                        App.UI.showToast('Klik tombol "Izinkan" dulu untuk mengaktifkan notifikasi.', 'error');
+                        return;
+                    }
+                    App.Handlers.syncSWState();
+                    App.UI.showToast('Pengaturan notifikasi disimpan!', 'success');
+                },
+                testNotification() {
+                    if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
+                    if(Notification.permission !== 'granted') {
+                        App.UI.showToast('Izinkan notifikasi dulu sebelum test.', 'error');
+                        App.Handlers.updateNotifStatus();
+                        return;
+                    }
+                    navigator.serviceWorker.ready.then(reg => {
+                        if(!reg.active) return App.UI.showToast('Service Worker belum aktif, coba refresh halaman.', 'error');
+                        reg.active.postMessage({ type: 'TEST_NOTIFICATION' });
+                        App.UI.showToast('✅ Test notifikasi terkirim!', 'success');
                     });
                 },
                 syncSWState() {
@@ -2290,17 +2363,6 @@
                             type: 'CHECK_DUE',
                             debts:     App.State.debts || [],
                             paylaters: App.State.paylaters,
-                        });
-                    });
-                },
-                testNotification() {
-                    if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
-                    Notification.requestPermission().then(p => {
-                        if(p !== 'granted') return App.UI.showToast('Izin notifikasi ditolak. Aktifkan di pengaturan browser.', 'error');
-                        navigator.serviceWorker.ready.then(reg => {
-                            if(!reg.active) return;
-                            reg.active.postMessage({ type: 'TEST_NOTIFICATION' });
-                            App.UI.showToast('✅ Test notifikasi terkirim!', 'success');
                         });
                     });
                 },
@@ -2491,14 +2553,32 @@
                 const fApp = initializeApp(this.Config.Firebase); this.Auth.init(fApp); this.DB.dbInstance = getDatabase(fApp);
                 const savedSet = localStorage.getItem('backup_v6'); if(savedSet) { try { const parsed = JSON.parse(savedSet); if(parsed.settings) this.State.settings = {...this.State.settings, ...parsed.settings}; } catch(e){} }
                 document.getElementById('setReminder').checked = this.State.settings.reminderEnabled; document.getElementById('setReminderTime').value = this.State.settings.reminderTime || "20:00"; if(this.State.settings.reminderEnabled) document.getElementById('setReminderTimeWrap').style.display = 'block';
+                setTimeout(() => App.Handlers.updateNotifStatus(), 200);
                 if('serviceWorker' in navigator) {
-                    navigator.serviceWorker.register('firebase-messaging-sw.js').then(reg => {
-                        // Force update SW jika ada versi baru
+                    // Deteksi base path otomatis (penting untuk GitHub Pages subdirectory)
+                    const swPath = new URL('firebase-messaging-sw.js', window.location.href).pathname;
+                    const swScope = swPath.substring(0, swPath.lastIndexOf('/') + 1);
+                    navigator.serviceWorker.register('firebase-messaging-sw.js', { scope: swScope }).then(reg => {
                         reg.update().catch(()=>{});
-                        // Kirim state setelah SW aktif
-                        if(reg.active) setTimeout(() => App.Handlers.syncSWState(), 2000);
-                    }).catch(()=>{});
+                        // Tunggu SW benar-benar aktif
+                        const waitActive = (r) => r.active ? r : new Promise(resolve => {
+                            const sw = r.installing || r.waiting;
+                            if(sw) sw.addEventListener('statechange', () => { if(sw.state === 'activated') resolve(r); });
+                            else resolve(r);
+                        });
+                       waitActive(reg).then(() => { setTimeout(() => App.Handlers.syncSWState(), 2000); }); // tunggu DB load
+                    }).catch(err => console.warn('SW register failed:', err));
+                    // Dengarkan pesan dari SW (opsional — bisa untuk deep link)
+                    navigator.serviceWorker.addEventListener('message', (e) => {
+                        if(e.data && e.data.type === 'SW_READY') App.Handlers.syncSWState();
+                    });
                 }
+          // ✅ Re-sync SW setiap kali tab aktif kembali (atasi SW suspend saat tab switch)
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && App.State.user) {
+        setTimeout(() => App.Handlers.syncSWState(), 300);
+    }
+});
             }
         };
 
