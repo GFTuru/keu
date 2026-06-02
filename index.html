@@ -788,13 +788,27 @@
 
                 <div class="form-group" style="padding-bottom: 1rem; border-bottom: 1px solid var(--border-light);">
                     <label class="switch-wrapper">
-                        <div><span class="font-bold">Notifikasi Harian</span></div>
+                        <div><span class="font-bold">🔔 Notifikasi Harian</span><p class="text-xs text-muted" style="margin:0.1rem 0 0;">Ingatkan catat transaksi di malam hari</p></div>
                         <input type="checkbox" id="setReminder" onchange="document.getElementById('setReminderTimeWrap').style.display = this.checked ? 'block' : 'none'; App.Handlers.saveReminder();">
                         <div class="switch"></div>
                     </label>
                     <div id="setReminderTimeWrap" style="display: none; margin-top: 1rem; background: var(--bg-body); padding: 1rem; border-radius: var(--radius-md);">
-                        <div style="display: flex; gap: 0.5rem; align-items: center;"><label class="text-xs" style="margin:0;">Pukul (HH:MM)</label><input type="time" id="setReminderTime" value="20:00" style="width:auto; padding:0.5rem;" onchange="App.Handlers.saveReminder()"></div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;"><label class="text-xs" style="margin:0; min-width:80px;">Pukul</label><input type="time" id="setReminderTime" value="20:00" style="width:auto; padding:0.5rem;" onchange="App.Handlers.saveReminder()"></div>
                     </div>
+                    <label class="switch-wrapper" style="margin-top: 1rem;">
+                        <div><span class="font-bold">☀️ Ringkasan Pagi</span><p class="text-xs text-muted" style="margin:0.1rem 0 0;">Ringkasan keuangan bulan ini setiap pagi</p></div>
+                        <input type="checkbox" id="setMorning" onchange="document.getElementById('setMorningTimeWrap').style.display = this.checked ? 'block' : 'none'; App.Handlers.saveReminder();">
+                        <div class="switch"></div>
+                    </label>
+                    <div id="setMorningTimeWrap" style="display: none; margin-top: 0.75rem; background: var(--bg-body); padding: 1rem; border-radius: var(--radius-md);">
+                        <div style="display: flex; gap: 0.5rem; align-items: center;"><label class="text-xs" style="margin:0; min-width:80px;">Pukul</label><input type="time" id="setMorningTime" value="08:00" style="width:auto; padding:0.5rem;" onchange="App.Handlers.saveReminder()"></div>
+                    </div>
+                    <label class="switch-wrapper" style="margin-top: 1rem;">
+                        <div><span class="font-bold">⚠️ Alert Budget</span><p class="text-xs text-muted" style="margin:0.1rem 0 0;">Notifikasi saat budget hampir habis (80%+)</p></div>
+                        <input type="checkbox" id="setBudgetAlert" onchange="App.Handlers.saveReminder();">
+                        <div class="switch"></div>
+                    </label>
+                    <button class="btn btn-outline btn-sm" style="margin-top: 1rem; width: 100%;" onclick="App.Handlers.testNotification()">🔔 Test Notifikasi</button>
                 </div>
                 
                 <div class="form-group" style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-light);">
@@ -1107,7 +1121,7 @@
                 isAdmin: false,
                 isPremium: false,
                 transactions: [], recurring: [], customCategories: [], goals: [], budgets: [], paylaters: [], transfers: [], debts: [],
-                settings: { reminderEnabled: false, reminderTime: "20:00", theme: "light", accentHue: 244 },
+                settings: { reminderEnabled: false, reminderTime: '20:00', morningEnabled: false, morningTime: '08:00', budgetAlertEnabled: false, theme: 'light', accentHue: 244 },
                 isLoading: true, charts: {}, searchTimer: null
             },
 
@@ -1535,7 +1549,8 @@
                             App.State.transfers = data.transfers || []; App.State.debts = data.debts || [];
                             if(data.settings) App.State.settings = {...App.State.settings, ...data.settings};
                         } else { this.save(); }
-                        App.State.isLoading = false; App.Premium.applyState(); App.Theme.init(); App.Handlers.processRecurring(); App.UI.renderAll(); return;
+                        App.State.isLoading = false; App.Premium.applyState(); App.Theme.init(); App.Handlers.processRecurring(); App.UI.renderAll();
+                        setTimeout(() => App.Handlers.syncSWState(), 1500); return;
                     }
 
                     const dbRef = ref(this.dbInstance, `users/${uid}/appData`);
@@ -1549,7 +1564,7 @@
                             App.State.transfers = data.transfers || []; App.State.debts = data.debts || [];
                             if(data.settings) App.State.settings = {...App.State.settings, ...data.settings};
                         } else { this.save(); }
-                        App.State.isLoading = false; App.Premium.applyState(); App.Theme.init(); App.Handlers.processRecurring(); App.UI.renderAll();
+                        App.State.isLoading = false; App.Premium.applyState(); App.Theme.init(); App.Handlers.processRecurring(); App.UI.renderAll(); setTimeout(() => { App.Handlers.syncSWState(); App.Handlers.checkDueSW(); }, 1500);
                     }, (error) => { console.error("Firebase DB Error:", error); App.UI.updateSyncStatus('error'); });
                 },
                 save() {
@@ -1946,6 +1961,7 @@
                         App.State.recurring.push({ id: Date.now(), type, template: tx, lastExecuted: tx.tanggal, nextExecution: nextDate.toISOString().split('T')[0], status: 'active' });
                     }
                     App.DB.save(); App.UI.renderAll(); e.target.reset(); App.UI.init(); document.getElementById('txRecurring').checked = false; document.getElementById('recurringOpts').style.display = 'none'; App.UI.showToast('Transaksi Berhasil Dicatat!', 'success');
+                    App.Handlers.syncSWState(); App.Handlers.checkBudgetSW();
                 },
                 addPaylater(e) {
                     e.preventDefault(); const name = document.getElementById('plName').value.trim(); const amt = App.Utils.parseCurrency(document.getElementById('plAmount').value);
@@ -2038,6 +2054,8 @@
                     App.DB.save(); App.UI.renderGoals(); App.UI.closeModal('addFundModal');
                     const isDone = goal.current >= goal.target;
                     App.UI.showToast(isDone ? `🏆 Target ${goal.name} tercapai!` : `✅ +${App.Utils.formatCurrency(amount)} ditambahkan ke ${goal.name}`, 'success');
+                    // Cek pencapaian goals via SW
+                    if('serviceWorker' in navigator) navigator.serviceWorker.ready.then(r => { if(r.active) r.active.postMessage({ type: 'CHECK_GOALS', goals: App.State.goals }); });
                 },
                 saveTransfer() {
                     const dari   = document.getElementById('tfDari').value;
@@ -2209,40 +2227,82 @@
                 },
 
                 saveReminder() {
-                    App.State.settings.reminderEnabled = document.getElementById('setReminder').checked;
-                    App.State.settings.reminderTime = document.getElementById('setReminderTime').value;
-                    if (App.DB.dbInstance || App.Auth.isDummy) App.DB.save();
-
-                    if ('serviceWorker' in navigator) {
-                        navigator.serviceWorker.ready.then(reg => {
-                            if (!reg.active) return;
-                            if (App.State.settings.reminderEnabled && 'Notification' in window) {
-                                Notification.requestPermission().then(p => {
-                                    if (p === 'granted') {
-                                        const hasTx = App.State.transactions.some(t => t.tanggal === new Date().toISOString().split('T')[0]);
-                                        // Kirim pesan untuk SET jadwal
-                                        reg.active.postMessage({
-                                            type: 'SCHEDULE_REMINDER',
-                                            time: App.State.settings.reminderTime,
-                                            hasTransactionToday: hasTx
-                                        });
-                                        App.UI.showToast('Pengingat berhasil diaktifkan 🔔', 'success');
-                                    } else {
-                                        App.UI.showToast('Izin notifikasi ditolak browser!', 'error');
-                                        document.getElementById('setReminder').checked = false;
-                                        App.State.settings.reminderEnabled = false;
-                                        if (App.DB.dbInstance || App.Auth.isDummy) App.DB.save();
-                                    }
-                                });
-                            } else {
-                                // Kirim pesan untuk MEMBATALKAN jadwal jika dimatikan user
-                                reg.active.postMessage({ type: 'CANCEL_REMINDER' });
-                                App.UI.showToast('Pengingat dinonaktifkan 🔕', 'info');
+                    const s = App.State.settings;
+                    s.reminderEnabled    = document.getElementById('setReminder').checked;
+                    s.reminderTime       = document.getElementById('setReminderTime').value;
+                    s.morningEnabled     = document.getElementById('setMorning')?.checked || false;
+                    s.morningTime        = document.getElementById('setMorningTime')?.value || '08:00';
+                    s.budgetAlertEnabled = document.getElementById('setBudgetAlert')?.checked || false;
+                    if(App.DB.dbInstance) App.DB.save();
+                    if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
+                    Notification.requestPermission().then(p => {
+                        if(p !== 'granted') return App.UI.showToast('Izin notifikasi ditolak', 'error');
+                        App.Handlers.syncSWState();
+                    });
+                },
+                syncSWState() {
+                    if(!('serviceWorker' in navigator)) return;
+                    navigator.serviceWorker.ready.then(reg => {
+                        if(!reg.active) return;
+                        const s      = App.State.settings;
+                        const today  = new Date().toISOString().split('T')[0];
+                        const hasTx  = App.State.transactions.some(t => t.tanggal === today);
+                        const allCats = [...App.Config.DefaultCategories, ...App.State.customCategories];
+                        reg.active.postMessage({
+                            type: 'SYNC_STATE',
+                            payload: {
+                                reminderEnabled:    s.reminderEnabled,
+                                reminderTime:       s.reminderTime,
+                                morningEnabled:     s.morningEnabled,
+                                morningTime:        s.morningTime,
+                                budgetAlertEnabled: s.budgetAlertEnabled,
+                                hasTransactionToday: hasTx,
+                                username:           App.State.user?.displayName || App.State.user?.username || '',
+                                budgets:            App.State.budgets,
+                                transactions:       App.State.transactions,
+                                categories:         allCats,
+                                debts:              App.State.debts || [],
+                                paylaters:          App.State.paylaters,
+                                goals:              App.State.goals || [],
                             }
                         });
-                    } else {
-                        App.UI.showToast('Browser kamu tidak mendukung notifikasi latar belakang.', 'error');
-                    }
+                    });
+                },
+                checkBudgetSW() {
+                    if(!App.State.settings.budgetAlertEnabled) return;
+                    if(!('serviceWorker' in navigator)) return;
+                    navigator.serviceWorker.ready.then(reg => {
+                        if(!reg.active) return;
+                        const allCats = [...App.Config.DefaultCategories, ...App.State.customCategories];
+                        reg.active.postMessage({
+                            type: 'CHECK_BUDGET',
+                            budgets:      App.State.budgets,
+                            transactions: App.State.transactions,
+                            categories:   allCats,
+                        });
+                    });
+                },
+                checkDueSW() {
+                    if(!('serviceWorker' in navigator)) return;
+                    navigator.serviceWorker.ready.then(reg => {
+                        if(!reg.active) return;
+                        reg.active.postMessage({
+                            type: 'CHECK_DUE',
+                            debts:     App.State.debts || [],
+                            paylaters: App.State.paylaters,
+                        });
+                    });
+                },
+                testNotification() {
+                    if(!('Notification' in window)) return App.UI.showToast('Browser tidak mendukung notifikasi', 'error');
+                    Notification.requestPermission().then(p => {
+                        if(p !== 'granted') return App.UI.showToast('Izin notifikasi ditolak. Aktifkan di pengaturan browser.', 'error');
+                        navigator.serviceWorker.ready.then(reg => {
+                            if(!reg.active) return;
+                            reg.active.postMessage({ type: 'TEST_NOTIFICATION' });
+                            App.UI.showToast('✅ Test notifikasi terkirim!', 'success');
+                        });
+                    });
                 },
                 exportData(type) {
                     if(type === 'json' && !App.State.isPremium) { App.UI.showModal('premiumModal'); return; }
@@ -2431,7 +2491,14 @@
                 const fApp = initializeApp(this.Config.Firebase); this.Auth.init(fApp); this.DB.dbInstance = getDatabase(fApp);
                 const savedSet = localStorage.getItem('backup_v6'); if(savedSet) { try { const parsed = JSON.parse(savedSet); if(parsed.settings) this.State.settings = {...this.State.settings, ...parsed.settings}; } catch(e){} }
                 document.getElementById('setReminder').checked = this.State.settings.reminderEnabled; document.getElementById('setReminderTime').value = this.State.settings.reminderTime || "20:00"; if(this.State.settings.reminderEnabled) document.getElementById('setReminderTimeWrap').style.display = 'block';
-                if('serviceWorker' in navigator) navigator.serviceWorker.register('firebase-messaging-sw.js').catch(()=>{});
+                if('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register('firebase-messaging-sw.js').then(reg => {
+                        // Force update SW jika ada versi baru
+                        reg.update().catch(()=>{});
+                        // Kirim state setelah SW aktif
+                        if(reg.active) setTimeout(() => App.Handlers.syncSWState(), 2000);
+                    }).catch(()=>{});
+                }
             }
         };
 
