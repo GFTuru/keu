@@ -26,6 +26,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Libraries -->
+    <!-- ── History Premium Popup ── -->
+    <div id="historyPremiumPopup">
+        <div class="hpp-card">
+            <div class="hpp-header">
+                <span class="hpp-icon">👑</span>
+                <div style="flex:1;">
+                    <h3 class="font-bold" style="margin:0 0 0.25rem;">Riwayat Lebih Lama Tersedia</h3>
+                    <p class="text-xs text-muted" style="margin:0;">Versi gratis hanya menampilkan <b>3 bulan terakhir</b>. Upgrade untuk lihat semua riwayat tanpa batas.</p>
+                </div>
+                <button class="hpp-close" id="historyPopupClose" title="Tutup">✕</button>
+            </div>
+            <button class="btn btn-premium" style="width:100%;padding:0.85rem;font-size:0.95rem;" onclick="App.UI.showModal('premiumModal'); document.getElementById('historyPremiumPopup').classList.remove('show');">✨ Upgrade Premium</button>
+            <label class="hpp-dont-show">
+                <input type="checkbox" id="historyPopupDontShow">
+                <span>Jangan tampilkan lagi</span>
+            </label>
+        </div>
+    </div>
+
     <!-- PWA Install Banner -->
     <div id="installBanner">
         <img src="https://i.ibb.co.com/0RGKc1CF/only-logo-192.png" class="ib-icon" alt="Keuangan Pro" onerror="this.style.display='none'">
@@ -269,6 +288,34 @@
         .premium-lock.show { opacity: 1; pointer-events: auto; }
         .premium-lock-icon { font-size: 2rem; margin-bottom: 0.5rem; filter: drop-shadow(0 4px 6px rgba(245,158,11,0.4)); }
 
+        /* History premium popup (menggantikan overlay) */
+        #historyPremiumPopup {
+            display: none; position: fixed; inset: 0; z-index: 9990;
+            align-items: flex-end; justify-content: center;
+            background: rgba(0,0,0,0.45); backdrop-filter: blur(2px);
+            padding-bottom: 80px;
+        }
+        #historyPremiumPopup.show { display: flex; }
+        #historyPremiumPopup .hpp-card {
+            background: var(--bg-card); border-radius: 24px 24px 20px 20px;
+            width: calc(100% - 2rem); max-width: 480px;
+            padding: 1.5rem 1.5rem 1.25rem;
+            box-shadow: 0 -4px 40px rgba(0,0,0,0.25), 0 20px 60px rgba(99,102,241,0.15);
+            border: 1px solid var(--border-light);
+            animation: slideUpPopup 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes slideUpPopup {
+            from { transform: translateY(80px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        #historyPremiumPopup .hpp-header { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; }
+        #historyPremiumPopup .hpp-icon { font-size: 2.25rem; filter: drop-shadow(0 4px 6px rgba(245,158,11,0.4)); flex-shrink: 0; }
+        #historyPremiumPopup .hpp-close { margin-left: auto; background: none; border: none; font-size: 1.2rem; color: var(--text-muted); cursor: pointer; padding: 0.1rem 0.3rem; line-height: 1; border-radius: 6px; }
+        #historyPremiumPopup .hpp-close:hover { background: var(--bg-body); }
+        #historyPremiumPopup .hpp-dont-show { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.85rem; padding-top: 0.85rem; border-top: 1px solid var(--border-light); cursor: pointer; }
+        #historyPremiumPopup .hpp-dont-show input { accent-color: var(--primary); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+        #historyPremiumPopup .hpp-dont-show span { font-size: 0.78rem; color: var(--text-muted); user-select: none; }
+
         .sync-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--text-light); flex-shrink: 0; transition: background 0.3s; }
         .sync-dot.active { background: var(--success); box-shadow: 0 0 5px var(--success); }
         .sync-dot.error { background: var(--danger); }
@@ -468,7 +515,9 @@
         <div class="auth-wrapper">
             <div class="auth-hero">
                 <div class="auth-hero-brand">
-                    <div class="auth-hero-icon">💎</div>
+                    <div class="auth-hero-icon" style="font-size:0;width:72px;height:72px;border-radius:18px;overflow:hidden;margin:0 auto 1rem;box-shadow:0 8px 24px rgba(99,102,241,0.35);">
+                        <img src="https://i.ibb.co.com/0RGKc1CF/only-logo-192.png" alt="Keuangan Pro" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.style.fontSize='2rem';this.parentElement.innerHTML='💎'">
+                    </div>
                     <h2>Kelola Keuangan<br>Lebih Cerdas</h2>
                     <p id="authSubtitle">Catat pemasukan, pengeluaran, dan raih target finansialmu.</p>
                 </div>
@@ -528,7 +577,9 @@
     <div class="app-container" id="appContainer">
         <header class="app-header">
             <div class="brand">
-                <div class="brand-icon" style="width: 40px; height: 40px; font-size: 1.25rem;">💎</div>
+                <div class="brand-icon" style="width:40px;height:40px;padding:0;overflow:hidden;border-radius:10px;background:none;">
+                    <img src="https://i.ibb.co.com/0RGKc1CF/only-logo-192.png" alt="Keuangan Pro" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" onerror="this.parentElement.innerHTML='💎'">
+                </div>
                 <div>
                     <h1 class="brand-title" style="font-size: 1.25rem;">Keuangan Pro <span class="badge-premium">PRO</span></h1>
                     <p class="text-xs font-medium text-muted" style="display:flex;align-items:center;gap:5px;">
@@ -753,11 +804,7 @@
                     <div class="skeleton sk-title"></div><div class="skeleton" style="height: 60px; margin-bottom: 10px;"></div><div class="skeleton" style="height: 60px;"></div>
                 </div>
                 
-                <div id="historyLock" class="premium-lock">
-                    <div class="premium-lock-icon">👑</div><h3 class="font-bold">Buka Riwayat Lengkap</h3>
-                    <p class="text-xs text-muted mb-2">Versi gratis hanya menampilkan 3 bulan terakhir.</p>
-                    <button class="btn btn-premium btn-sm mt-2" onclick="App.UI.showModal('premiumModal')">Upgrade Premium</button>
-                </div>
+                <div id="historyLock" class="premium-lock" style="display:none!important;"></div>
             </div>
         </main>
 
@@ -1842,7 +1889,14 @@
                     }).sort((a,b) => new Date(b.tanggal) - new Date(a.tanggal));
 
                     const hasLocked = !App.State.isPremium && filtered.some(t => t.tanggal < limitDateStr);
-                    if(hasLocked) { lockDiv.classList.add('show'); filtered = filtered.filter(t => t.tanggal >= limitDateStr); } else { lockDiv.classList.remove('show'); }
+                    if(hasLocked) {
+                        // Tampilkan popup (kecuali user sudah centang "jangan tampilkan lagi")
+                        if(!localStorage.getItem('history_popup_hide')) {
+                            const popup = document.getElementById('historyPremiumPopup');
+                            if(popup) popup.classList.add('show');
+                        }
+                        filtered = filtered.filter(t => t.tanggal >= limitDateStr);
+                    }
 
                     if (!filtered.length) { list.innerHTML = `<div class="text-center" style="padding:3rem 1rem;"><div style="font-size:3rem; opacity:0.5; margin-bottom:1rem;">📭</div><p class="text-muted">Tidak ada riwayat.</p></div>`; return; }
 
@@ -2688,6 +2742,20 @@ document.addEventListener('visibilitychange', () => {
         window.addEventListener('appinstalled', () => {
             document.getElementById('installBanner')?.classList.remove('show');
             _deferredInstall = null;
+        });
+
+        // ── History Premium Popup handlers ──
+        document.getElementById('historyPopupClose')?.addEventListener('click', () => {
+            if(document.getElementById('historyPopupDontShow')?.checked)
+                localStorage.setItem('history_popup_hide', '1');
+            document.getElementById('historyPremiumPopup')?.classList.remove('show');
+        });
+        document.getElementById('historyPremiumPopup')?.addEventListener('click', (e) => {
+            if(e.target === e.currentTarget) {
+                if(document.getElementById('historyPopupDontShow')?.checked)
+                    localStorage.setItem('history_popup_hide', '1');
+                e.currentTarget.classList.remove('show');
+            }
         });
 
         // ── Handle shortcut URL params (?action=add / ?action=history) ──
