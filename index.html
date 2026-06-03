@@ -6,11 +6,19 @@
     <title>Keuangan Pro | Smart Finance Tracker</title>
     
     <!-- PWA & Meta -->
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#4f46e5" id="metaThemeColor">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Keuangan Pro">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Keuangan Pro">
+    <meta name="description" content="Smart Finance Tracker — Catat, pantau, dan rencanakan keuanganmu">
+    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/jpg" href="logo.jpg">
     <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="apple-touch-icon" sizes="152x152" href="logo.jpg">
+    <link rel="apple-touch-icon" sizes="180x180" href="logo.jpg">
+    <link rel="apple-touch-icon" sizes="167x167" href="logo.jpg">
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,6 +26,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Libraries -->
+    <!-- PWA Install Banner -->
+    <div id="installBanner">
+        <img src="logo.jpg" class="ib-icon" alt="Keuangan Pro" onerror="this.style.display='none'">
+        <div class="ib-text">
+            <p class="ib-title">Pasang di Layar Utama</p>
+            <p class="ib-sub">Akses lebih cepat seperti app native 🚀</p>
+        </div>
+        <button class="ib-btn" id="installBtn">Install</button>
+        <button class="ib-close" id="installClose">✕</button>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
@@ -378,6 +397,16 @@
         body:not(.is-premium) .theme-swatch:not(:first-child) { opacity: 0.45; cursor: not-allowed; }
         body:not(.is-premium) .theme-swatch:first-child { opacity: 1; cursor: pointer; }
 
+        /* ── PWA Install Prompt ── */
+        #installBanner { position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%) translateY(120px); width: calc(100% - 2rem); max-width: 480px; background: linear-gradient(135deg, #312e81, #1e1b4b); border: 1px solid rgba(99,102,241,0.4); border-radius: 18px; padding: 1rem 1.1rem; display: flex; align-items: center; gap: 0.9rem; box-shadow: 0 -4px 30px rgba(79,70,229,0.3), 0 10px 40px rgba(0,0,0,0.4); z-index: 9998; transition: transform 0.45s cubic-bezier(0.34,1.56,0.64,1), opacity 0.3s ease; opacity: 0; pointer-events: none; }
+        #installBanner.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: all; }
+        #installBanner .ib-icon { width: 48px; height: 48px; border-radius: 12px; object-fit: cover; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
+        #installBanner .ib-text { flex: 1; min-width: 0; }
+        #installBanner .ib-title { font-weight: 800; font-size: 0.875rem; color: white; margin: 0 0 0.15rem; }
+        #installBanner .ib-sub { font-size: 0.72rem; color: rgba(255,255,255,0.55); margin: 0; }
+        #installBanner .ib-btn { background: #6366f1; color: white; border: none; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.2s; }
+        #installBanner .ib-btn:hover { background: #4f46e5; }
+        #installBanner .ib-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; flex-shrink: 0; line-height: 1; }
     </style>
 </head>
 <body>
@@ -2584,6 +2613,44 @@ document.addEventListener('visibilitychange', () => {
 
         window.App = App;
         document.addEventListener('DOMContentLoaded', () => App.Init());
+
+        // ── PWA Install Prompt ──
+        let _deferredInstall = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            _deferredInstall = e;
+            // Tampilkan banner setelah 3 detik (beri waktu app load)
+            if(!localStorage.getItem('pwa_install_dismissed')) {
+                setTimeout(() => {
+                    const b = document.getElementById('installBanner');
+                    if(b) b.classList.add('show');
+                }, 3000);
+            }
+        });
+        document.getElementById('installBtn')?.addEventListener('click', async () => {
+            const b = document.getElementById('installBanner');
+            if(_deferredInstall) {
+                _deferredInstall.prompt();
+                const { outcome } = await _deferredInstall.userChoice;
+                if(outcome === 'accepted') { if(b) b.classList.remove('show'); }
+                _deferredInstall = null;
+            }
+        });
+        document.getElementById('installClose')?.addEventListener('click', () => {
+            document.getElementById('installBanner')?.classList.remove('show');
+            localStorage.setItem('pwa_install_dismissed', '1');
+        });
+        window.addEventListener('appinstalled', () => {
+            document.getElementById('installBanner')?.classList.remove('show');
+            _deferredInstall = null;
+        });
+
+        // ── Handle shortcut URL params (?action=add / ?action=history) ──
+        window.addEventListener('load', () => {
+            const action = new URLSearchParams(window.location.search).get('action');
+            if(action === 'add') setTimeout(() => App.UI.showModal('txModal'), 800);
+            else if(action === 'history') setTimeout(() => App.UI.switchTab('history', document.getElementById('navHistory')), 600);
+        });
     </script>
 </body>
 </html>
