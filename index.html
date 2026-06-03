@@ -407,9 +407,54 @@
         #installBanner .ib-btn { background: #6366f1; color: white; border: none; padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.8rem; cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.2s; }
         #installBanner .ib-btn:hover { background: #4f46e5; }
         #installBanner .ib-close { background: none; border: none; color: rgba(255,255,255,0.4); font-size: 1.1rem; cursor: pointer; padding: 0.25rem; flex-shrink: 0; line-height: 1; }
+        /* ── Intro / Loading Screen ── */
+        #introScreen {
+            position: fixed; inset: 0; z-index: 99999;
+            background: #000; display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.7s ease;
+        }
+        #introScreen.fade-out { opacity: 0; pointer-events: none; }
+        #introScreen.hidden   { display: none !important; }
+
+        #introVideo {
+            width: 100%; height: 100%; object-fit: cover;
+            position: absolute; inset: 0;
+        }
+
+        #introSkip {
+            position: absolute; bottom: 2.5rem; right: 1.5rem;
+            background: rgba(255,255,255,0.12); backdrop-filter: blur(8px);
+            color: white; border: 1px solid rgba(255,255,255,0.25);
+            padding: 0.5rem 1.1rem; border-radius: 99px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            display: none; transition: background 0.2s, opacity 0.4s;
+            letter-spacing: 0.03em;
+        }
+        #introSkip.visible { display: block; }
+        #introSkip:hover   { background: rgba(255,255,255,0.22); }
+
+        #introProgress {
+            position: absolute; bottom: 0; left: 0;
+            height: 3px; width: 0%;
+            background: linear-gradient(90deg, #818cf8, #6366f1);
+            transition: width linear;
+        }
     </style>
 </head>
 <body>
+    <!-- ── Intro / Loading Screen ── -->
+    <div id="introScreen">
+        <video
+            id="introVideo"
+            src="intro.mp4"
+            autoplay
+            muted
+            playsinline
+            preload="auto"
+        ></video>
+        <div id="introProgress"></div>
+        <button id="introSkip">Lewati ✕</button>
+    </div>
     <div class="ambient-bg"></div>
     <div class="toast-container" id="toastContainer"></div>
 
@@ -2651,6 +2696,47 @@ document.addEventListener('visibilitychange', () => {
             if(action === 'add') setTimeout(() => App.UI.showModal('txModal'), 800);
             else if(action === 'history') setTimeout(() => App.UI.switchTab('history', document.getElementById('navHistory')), 600);
         });
+
+        // ── Intro / Loading Screen ──
+        (function() {
+            const screen   = document.getElementById('introScreen');
+            const video    = document.getElementById('introVideo');
+            const skipBtn  = document.getElementById('introSkip');
+            const progress = document.getElementById('introProgress');
+            if(!screen || !video) return;
+
+            let dismissed = false;
+
+            function dismiss() {
+                if(dismissed) return;
+                dismissed = true;
+                screen.classList.add('fade-out');
+                setTimeout(() => screen.classList.add('hidden'), 750);
+            }
+
+            // Perbarui progress bar selama video jalan
+            video.addEventListener('timeupdate', () => {
+                if(!video.duration) return;
+                const pct = (video.currentTime / video.duration) * 100;
+                progress.style.width = pct + '%';
+                progress.style.transitionDuration = '0.2s';
+            });
+
+            // Tampilkan tombol skip setelah 2 detik
+            setTimeout(() => skipBtn.classList.add('visible'), 2000);
+            skipBtn.addEventListener('click', dismiss);
+
+            // Dismiss otomatis saat video selesai
+            video.addEventListener('ended', () => {
+                progress.style.width = '100%';
+                progress.style.transitionDuration = '0.3s';
+                setTimeout(dismiss, 300);
+            });
+
+            // Fallback: kalau video gagal load atau error → langsung dismiss
+            video.addEventListener('error', dismiss);
+            setTimeout(() => { if(!dismissed) dismiss(); }, 12000); // max 12 detik
+        })();
     </script>
 </body>
 </html>
