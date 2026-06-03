@@ -91,8 +91,8 @@ self.addEventListener('message', (event) => {
       sendNotif('test', {
         title: '🔔 Keuangan Pro — Test Berhasil!',
         body:  'Notifikasi aktif dan berfungsi dengan baik ✅',
-        icon:  './logo.jpg',
-        badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
+        badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         tag:   'test',
         data:  { url: './' },
       }, /* forceSkipCooldown= */ true);
@@ -148,8 +148,8 @@ function scheduleEvening() {
       sendNotif('evening', {
         title: `💰 Waktunya Catat Keuangan${name}!`,
         body:  'Kamu belum mencatat transaksi hari ini. Yuk catat pengeluaranmu sekarang!',
-        icon:  './logo.jpg',
-        badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
+        badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         image: notifImgUrl('evening', `💰 Waktunya Catat Keuangan${name}!`, 'Belum ada transaksi hari ini — yuk catat sekarang!'),
         tag:   'daily-reminder',
         renotify: true,
@@ -184,8 +184,8 @@ function scheduleMorning() {
     sendNotif('morning', {
       title: '☀️ Ringkasan Keuangan Pagi Ini',
       body:  `${name}Bulan ini: Pemasukan ${fmtIDR(income)} · Pengeluaran ${fmtIDR(expense)} · Saldo ${sign}${fmtIDR(balance)}`,
-      icon:  './logo.jpg',
-      badge: './logo.jpg',
+      icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
+      badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
       image: notifImgUrl('morning', `${name}☀️ Ringkasan Bulan Ini`, `Masuk ${fmtIDR(income)} · Keluar ${fmtIDR(expense)} · Saldo ${sign}${fmtIDR(balance)}`),
       tag:   'morning-briefing',
       renotify: true,
@@ -225,7 +225,7 @@ function checkBudgets() {
       sendNotif(`budget-over-${b.category}`, {
         title: '🚨 Budget Terlampaui!',
         body:  `Pengeluaran "${catName}" sudah ${fmtIDR(spent)} — melewati limit ${fmtIDR(b.amount)}.`,
-        icon:  './logo.jpg', badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         image: notifImgUrl('budget_over', `🚨 Budget ${catName} Terlampaui!`, `${fmtIDR(spent)} dari limit ${fmtIDR(b.amount)}`, Math.min(Math.round(pct), 100)),
         tag:   `budget-${b.category}`, renotify: true,
         data:  { url: './' },
@@ -234,7 +234,7 @@ function checkBudgets() {
       sendNotif(`budget-warn-${b.category}`, {
         title: '⚠️ Budget Hampir Habis',
         body:  `"${catName}" sudah ${Math.round(pct)}% dari limit. Sisa ${fmtIDR(b.amount - spent)}.`,
-        icon:  './logo.jpg', badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         image: notifImgUrl('budget_warn', `⚠️ Budget ${catName} Hampir Habis`, `Sisa ${fmtIDR(b.amount - spent)} dari limit ${fmtIDR(b.amount)}`, Math.round(pct)),
         tag:   `budget-${b.category}`, renotify: true,
         data:  { url: './' },
@@ -269,21 +269,21 @@ function checkDueDates() {
       sendNotif(`debt-overdue-${d.id}`, {
         title: '🔴 Hutang Jatuh Tempo!',
         body:  `Hutang ke "${d.nama}" sebesar ${fmtIDR(d.sisa)} sudah melewati tanggal jatuh tempo.`,
-        icon:  './logo.jpg', badge: './logo.jpg', tag: `debt-${d.id}`, renotify: true,
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', tag: `debt-${d.id}`, renotify: true,
         data:  { url: './' },
       });
     } else if (daysLeft === 0 && canNotify(`debt-today-${d.id}`)) {
       sendNotif(`debt-today-${d.id}`, {
         title: '⏰ Hutang Jatuh Tempo Hari Ini!',
         body:  `Hutang ke "${d.nama}" sebesar ${fmtIDR(d.sisa)} jatuh tempo hari ini.`,
-        icon:  './logo.jpg', badge: './logo.jpg', tag: `debt-${d.id}`, renotify: true,
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', tag: `debt-${d.id}`, renotify: true,
         data:  { url: './' },
       });
     } else if (daysLeft <= 3 && daysLeft > 0 && canNotify(`debt-soon-${d.id}`)) {
       sendNotif(`debt-soon-${d.id}`, {
         title: '📅 Pengingat Hutang',
         body:  `Hutang ke "${d.nama}" sebesar ${fmtIDR(d.sisa)} jatuh tempo ${daysLeft} hari lagi.`,
-        icon:  './logo.jpg', badge: './logo.jpg', tag: `debt-${d.id}`, renotify: true,
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', tag: `debt-${d.id}`, renotify: true,
         data:  { url: './' },
       });
     }
@@ -302,7 +302,7 @@ function checkGoals() {
       sendNotif(`goal-done-${g.id}`, {
         title: '🏆 Target Impian Tercapai!',
         body:  `Selamat! Target "${g.name}" sebesar ${fmtIDR(g.target)} sudah terpenuhi!`,
-        icon:  './logo.jpg', badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         image: notifImgUrl('goal_done', `🏆 Target "${g.name}" LUNAS!`, `Total ${fmtIDR(g.target)} berhasil terkumpul 🎉`, 100),
         tag: `goal-${g.id}`, renotify: true,
         data:  { url: './' },
@@ -311,7 +311,7 @@ function checkGoals() {
       sendNotif(`goal-near-${g.id}`, {
         title: '🎯 Hampir Sampai!',
         body:  `Target "${g.name}" sudah ${Math.round(pct)}% terpenuhi. Yuk tambah tabungan!`,
-        icon:  './logo.jpg', badge: './logo.jpg',
+        icon:  'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png', badge: 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
         image: notifImgUrl('goal_near', `🎯 Target "${g.name}" ${Math.round(pct)}%`, `Terkumpul ${fmtIDR(g.current)} dari ${fmtIDR(g.target)}`, Math.round(pct)),
         tag: `goal-${g.id}`, renotify: true,
         data:  { url: './' },
@@ -327,8 +327,8 @@ function sendNotif(id, options, forceSkipCooldown = false) {
   if (!forceSkipCooldown && !canNotify(id)) return;
   self.registration.showNotification(options.title, {
     body:             options.body || '',
-    icon:             options.icon || './logo.jpg',
-    badge:            options.badge || './logo.jpg',
+    icon:             options.icon || 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
+    badge:            options.badge || 'https://i.ibb.co.com/0RGKc1CF/only-logo-192.png',
     tag:              options.tag || id,
     renotify:         options.renotify || false,
     requireInteraction: false,
