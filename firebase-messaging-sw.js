@@ -45,7 +45,16 @@ function canNotify(id) {
 // LIFECYCLE
 // ================================================================
 self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    clients.claim().then(() => {
+      // Minta semua client kirim ulang SYNC_STATE setelah SW restart
+      return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        list.forEach(c => c.postMessage({ type: 'SW_WAKE' }));
+      });
+    })
+  );
+});
 
 // ================================================================
 // MESSAGE HANDLER — menerima perintah dari halaman utama
