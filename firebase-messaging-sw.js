@@ -1,9 +1,4 @@
-// ================================================================
-// firebase-messaging-sw.js — Keuangan Pro Service Worker
-// Versi: 2.0 (Smart Notification Engine)
-// ================================================================
-
-const SW_VERSION = '2.0.0';
+const SW_VERSION = '2.5.0';
 
 // ── State internal SW ──
 let state = {
