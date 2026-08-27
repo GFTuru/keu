@@ -2,318 +2,603 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
-<title>CALC. NOIR — Precision Instrument</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rak — Outfit tiap hari</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,500;1,9..144,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@600;700;800&family=Archivo:wght@400;500;600&display=swap');
 
-:root{
-  --void: #0c0a11;
-  --panel: #16121d;
-  --panel-2: #1c1826;
-  --gold: #c9a961;
-  --gold-bright: #ecd9a3;
-  --cream: #f3ead9;
-  --cream-dim: #a89f8f;
-  --crimson: #c1453c;
-  --border: rgba(201,169,97,0.22);
-}
+  :root{
+    --ink:#232A2E;
+    --paper:#F3EEE3;
+    --paper-2:#E9E1D0;
+    --thread:#B4423A;
+    --sage:#7C8B6F;
+    --gold:#B8912C;
+    --line: rgba(35,42,46,0.16);
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:'Archivo', sans-serif; -webkit-font-smoothing:antialiased; }
+  h1,h2,h3,.display{ font-family:'Archivo Expanded', sans-serif; text-transform:uppercase; letter-spacing:0.02em; }
+  ::selection{ background:var(--thread); color:var(--paper); }
 
-*{box-sizing:border-box; margin:0; padding:0;}
+  .app{ max-width:900px; margin:0 auto; padding:20px 18px 80px; }
 
-body{
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 0%, #241d30 0%, transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 100%, #23151a 0%, transparent 55%),
-    var(--void);
-  font-family:'JetBrains Mono', monospace;
-  padding:32px 16px;
-  overflow:hidden;
-}
+  header.top{ display:flex; align-items:baseline; justify-content:space-between; padding-bottom:16px; margin-bottom:22px; border-bottom:3px solid var(--ink); }
+  header.top h1{ font-size:26px; margin:0; font-weight:800; }
+  header.top .sub{ font-size:11px; letter-spacing:0.14em; text-transform:uppercase; color:var(--thread); font-weight:600; }
 
-.stage{
-  position:relative;
-  width:340px;
-}
+  nav.tabs{ display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; }
+  nav.tabs button{ font-family:'Archivo Expanded', sans-serif; text-transform:uppercase; font-size:12px; letter-spacing:0.06em; padding:9px 16px; border-radius:999px; border:2px solid var(--ink); background:transparent; color:var(--ink); cursor:pointer; font-weight:700; transition: all .15s ease; }
+  nav.tabs button.active{ background:var(--ink); color:var(--paper); }
+  nav.tabs button:hover:not(.active){ background:var(--paper-2); }
 
-.eyebrow{
-  display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-  margin-bottom:14px;
-  padding:0 4px;
-}
-.eyebrow .mark{
-  font-size:10.5px;
-  letter-spacing:0.28em;
-  color:var(--gold);
-  text-transform:uppercase;
-  font-weight:600;
-}
-.eyebrow .ref{
-  font-size:9.5px;
-  letter-spacing:0.15em;
-  color:var(--cream-dim);
-}
+  section{ display:none; }
+  section.active{ display:block; animation: fadeIn .25s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
 
-.calc{
-  position:relative;
-  background: linear-gradient(160deg, var(--panel-2), var(--panel) 60%);
-  border-radius:22px;
-  padding:22px;
-  border:1px solid var(--border);
-  box-shadow:
-    0 30px 60px -20px rgba(0,0,0,0.7),
-    0 0 0 1px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-}
+  .empty{ border:2px dashed var(--line); border-radius:8px; padding:40px 20px; text-align:center; color:#5c6469; }
+  .empty .display{ font-size:16px; color:var(--ink); margin-bottom:6px; }
 
-.calc::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  border-radius:22px;
-  padding:1px;
-  background: linear-gradient(135deg, rgba(201,169,97,0.5), transparent 30%, transparent 70%, rgba(201,169,97,0.25));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events:none;
-}
+  .brief-card{ background:var(--ink); color:var(--paper); border-radius:10px; padding:22px; margin-bottom:20px; }
+  .brief-card h2{ font-size:15px; margin:0 0 14px; color:var(--gold); }
+  .field-row{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+  .field-row > div{ flex:1; min-width:140px; }
+  label{ display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.1em; opacity:0.75; margin-bottom:5px; }
+  select, input[type=text]{ width:100%; padding:9px 10px; border-radius:5px; border:1px solid rgba(243,238,227,0.25); background:rgba(243,238,227,0.12); color:var(--paper); font-family:'Archivo'; font-size:13px; }
+  select option{ color:#111; }
+  input[type=text]::placeholder{ color:rgba(243,238,227,0.45); }
 
-/* screen */
-.screen{
-  position:relative;
-  background: linear-gradient(180deg, #0a0810, #100c17);
-  border-radius:14px;
-  padding:22px 20px 18px;
-  margin-bottom:18px;
-  min-height:118px;
-  border:1px solid rgba(0,0,0,0.6);
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.6), inset 0 0 40px rgba(201,169,97,0.03);
-  overflow:hidden;
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
-}
+  .btn{ font-family:'Archivo Expanded'; text-transform:uppercase; font-size:12px; letter-spacing:0.06em; font-weight:700; border-radius:999px; border:none; padding:11px 22px; cursor:pointer; transition:transform .1s ease, opacity .15s; }
+  .btn:active{ transform:scale(0.97); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+  .btn-primary{ background:var(--thread); color:var(--paper); }
+  .btn-primary:hover:not(:disabled){ opacity:0.9; }
+  .btn-ghost{ background:transparent; border:2px solid var(--ink); color:var(--ink); }
+  .btn-ghost:hover:not(:disabled){ background:var(--paper-2); }
+  .btn-gold{ background:var(--gold); color:var(--ink); }
+  .btn-sage{ background:var(--sage); color:#fff; }
+  .btn-small{ font-size:10px; padding:7px 14px; }
 
-.screen .expr{
-  font-size:13px;
-  color:var(--cream-dim);
-  letter-spacing:0.03em;
-  min-height:16px;
-  text-align:right;
-  opacity:0.75;
-  transition: opacity 0.2s ease;
-}
+  .rec-actions{ margin-top:6px; display:flex; gap:10px; flex-wrap:wrap; }
 
-.screen .result{
-  font-size:38px;
-  font-weight:600;
-  color:var(--cream);
-  text-align:right;
-  letter-spacing:0.01em;
-  line-height:1.15;
-  margin-top:4px;
-  word-break:break-all;
-  transition: transform 0.15s ease;
-}
+  .outfit-result{ margin-top:22px; }
+  .outfit-result .note{ font-size:13px; line-height:1.6; padding:14px 16px; background:var(--paper-2); border-left:3px solid var(--sage); border-radius:0 6px 6px 0; margin-bottom:16px; }
+  .style-note{ font-size:13px; line-height:1.7; padding:14px 16px; background:#fff; border-left:3px solid var(--gold); border-radius:0 6px 6px 0; margin-top:14px; display:none; }
+  .style-note.show{ display:block; }
+  .style-note .lbl{ font-size:10px; text-transform:uppercase; letter-spacing:0.1em; color:var(--gold); font-weight:700; margin-bottom:6px; }
+  .outfit-slots{ display:flex; flex-wrap:wrap; gap:14px; }
 
-/* reveal layer for the prank */
+  .tag-card{ position:relative; width:150px; background:var(--paper); border:1.5px solid var(--ink); border-radius:6px 6px 10px 10px; padding:10px 10px 12px; padding-top:26px; box-shadow: 2px 3px 0 rgba(35,42,46,0.14); }
+  .tag-card .string{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:2px; height:16px; background:var(--ink); }
+  .tag-card .hole{ position:absolute; top:6px; left:50%; transform:translateX(-50%); width:9px; height:9px; border-radius:50%; background:var(--paper); border:1.5px solid var(--ink); }
+  .tag-card img{ width:100%; height:110px; object-fit:cover; border-radius:3px; border:1px solid var(--line); background:var(--paper-2); display:block; margin-bottom:8px; }
+  .tag-card .no-img{ width:100%; height:110px; border-radius:3px; border:1px dashed var(--line); background:var(--paper-2); display:flex; align-items:center; justify-content:center; font-size:10px; color:#8a9096; text-align:center; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.06em; }
+  .tag-card .cat{ font-size:9px; text-transform:uppercase; letter-spacing:0.1em; color:var(--thread); font-weight:700; margin-bottom:3px; }
+  .tag-card .name{ font-size:12.5px; font-weight:600; line-height:1.3; }
+  .tag-card .meta{ font-size:10px; color:#767c80; margin-top:4px; }
 
+  .swap-row{ margin-top:16px; display:flex; gap:10px; flex-wrap:wrap; }
 
-/* keypad */
-.pad{
-  display:grid;
-  grid-template-columns:repeat(4, 1fr);
-  gap:10px;
-}
+  .closet-toolbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; gap:10px; flex-wrap:wrap; }
+  .filter-chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{ font-size:11px; padding:6px 12px; border-radius:999px; border:1.5px solid var(--line); background:var(--paper); cursor:pointer; text-transform:uppercase; letter-spacing:0.04em; font-weight:600; }
+  .chip.active{ border-color:var(--ink); background:var(--ink); color:var(--paper); }
 
-button{
-  font-family:'JetBrains Mono', monospace;
-  font-size:16px;
-  font-weight:500;
-  border:none;
-  border-radius:12px;
-  height:56px;
-  cursor:pointer;
-  color:var(--cream);
-  background: linear-gradient(160deg, #241f30, #1a1624);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.06),
-    inset 0 -2px 4px rgba(0,0,0,0.4),
-    0 1px 0 rgba(0,0,0,0.3);
-  transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-button:active{
-  transform: translateY(1px) scale(0.97);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-}
+  .closet-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:16px 14px; }
+  .closet-grid .tag-card{ width:100%; }
+  .closet-grid .tag-card .del{ position:absolute; top:-10px; right:-8px; width:22px; height:22px; border-radius:50%; background:var(--thread); color:#fff; border:2px solid var(--paper); font-size:13px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700; }
 
-button.fn{
-  color:var(--gold);
-  background: linear-gradient(160deg, #2a2418, #1e1a12);
-}
-button.op{
-  color:var(--gold-bright);
-  background: linear-gradient(160deg, #2c2416, #1f190e);
-  font-size:18px;
-}
-button.zero{ grid-column: span 2; }
+  .form-card{ background:#fff; border:1.5px solid var(--ink); border-radius:8px; padding:22px; margin-bottom:18px; }
+  .form-card h3{ font-size:14px; margin:0 0 4px; }
+  .form-card .desc{ font-size:12px; color:#767c80; margin-bottom:16px; }
 
-button.eq{
-  background: linear-gradient(160deg, var(--crimson), #8f2f28);
-  color:var(--cream);
-  font-weight:700;
-  letter-spacing:0.04em;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.15),
-    0 8px 20px -6px rgba(193,69,60,0.55);
-}
-button.eq:active{
-  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
-}
+  .bulk-drop{ border:2px dashed var(--line); border-radius:8px; padding:28px 18px; text-align:center; cursor:pointer; position:relative; }
+  .bulk-drop input{ position:absolute; inset:0; opacity:0; cursor:pointer; }
+  .bulk-drop .hint{ font-size:12px; color:#767c80; margin-top:4px; }
 
-.footer-note{
-  text-align:center;
-  margin-top:14px;
-  font-size:9px;
-  letter-spacing:0.14em;
-  color:var(--cream-dim);
-  opacity:0.5;
-  text-transform:uppercase;
-}
+  .review-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:14px; margin-top:18px; }
+  .review-card{ background:var(--paper); border:1.5px solid var(--ink); border-radius:8px; padding:10px; position:relative; }
+  .review-card img{ width:100%; height:100px; object-fit:cover; border-radius:4px; margin-bottom:8px; }
+  .review-card .scanning{ width:100%; height:100px; border-radius:4px; margin-bottom:8px; background:var(--paper-2); display:flex; align-items:center; justify-content:center; }
+  .review-card .spinner{ width:20px; height:20px; border:2.5px solid var(--line); border-top-color:var(--thread); border-radius:50%; animation:spin .8s linear infinite; }
+  .review-card input[type=text]{ width:100%; padding:6px 7px; font-size:11px; border-radius:4px; border:1px solid var(--line); background:#fff; color:var(--ink); margin-bottom:5px; }
+  .review-card select{ width:100%; padding:6px 7px; font-size:11px; border-radius:4px; border:1px solid var(--line); background:#fff; color:var(--ink); margin-bottom:5px; }
+  .review-card .remove{ position:absolute; top:-8px; right:-8px; width:20px; height:20px; border-radius:50%; background:var(--thread); color:#fff; border:2px solid var(--paper); font-size:12px; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; font-weight:700; }
+  .review-card .err{ font-size:10px; color:var(--thread); margin-top:2px; }
+
+  .toast{ position:fixed; bottom:22px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--paper); padding:12px 20px; border-radius:999px; font-size:13px; font-weight:600; opacity:0; pointer-events:none; transition:all .25s ease; z-index:50; max-width:88vw; text-align:center; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
 
-  <div class="calc">
-    <div class="screen" id="screen">
-      <div class="expr" id="expr">&nbsp;</div>
-      <div class="result" id="result">0</div>
+<div class="app">
+  <header class="top">
+    <div>
+      <h1>Rak</h1>
+      <div class="sub">Lemari digital &amp; rekomendasi outfit harian</div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="active" data-tab="rekomendasi">Mau kemana?</button>
+    <button data-tab="lemari">Lemari</button>
+    <button data-tab="tambah">+ Tambah baju</button>
+  </nav>
+
+  <!-- ===================== TAB: REKOMENDASI ===================== -->
+  <section id="rekomendasi" class="active">
+    <div class="brief-card">
+      <h2>Ceritain hari ini dulu</h2>
+      <div class="field-row">
+        <div>
+          <label>Kegiatan</label>
+          <select id="inp-kegiatan">
+            <option value="kuliah">Kuliah</option>
+            <option value="kerja/ngoding">Kerja / ngoding</option>
+            <option value="santai">Santai di rumah</option>
+            <option value="hangout">Hangout / nongkrong</option>
+            <option value="acara formal">Acara formal</option>
+            <option value="olahraga">Olahraga</option>
+            <option value="ibadah">Ke acara/tempat ibadah</option>
+          </select>
+        </div>
+        <div>
+          <label>Cuaca</label>
+          <select id="inp-cuaca">
+            <option value="panas">Panas / terik</option>
+            <option value="mendung">Mendung / adem</option>
+            <option value="hujan">Hujan</option>
+            <option value="dingin ac">Banyak di ruangan AC</option>
+          </select>
+        </div>
+        <div>
+          <label>Warna favorit hari ini (opsional)</label>
+          <input type="text" id="inp-warna" placeholder="misal: biru, netral...">
+        </div>
+      </div>
+      <div class="rec-actions">
+        <button class="btn btn-primary" id="btn-generate">Cariin outfit</button>
+      </div>
     </div>
 
-    <div class="pad">
-      <button class="fn" data-action="clear">C</button>
-      <button class="fn" data-action="sign">±</button>
-      <button class="fn" data-action="percent">%</button>
-      <button class="op" data-val="÷">÷</button>
-
-      <button data-val="7">7</button>
-      <button data-val="8">8</button>
-      <button data-val="9">9</button>
-      <button class="op" data-val="×">×</button>
-
-      <button data-val="4">4</button>
-      <button data-val="5">5</button>
-      <button data-val="6">6</button>
-      <button class="op" data-val="−">−</button>
-
-      <button data-val="1">1</button>
-      <button data-val="2">2</button>
-      <button data-val="3">3</button>
-      <button class="op" data-val="+">+</button>
-
-      <button class="zero" data-val="0">0</button>
-      <button data-val=".">.</button>
-      <button class="eq" data-action="equals">=</button>
+    <div class="outfit-result" id="outfit-result" style="display:none;">
+      <div class="note" id="outfit-note"></div>
+      <div class="outfit-slots" id="outfit-slots"></div>
+      <div class="swap-row">
+        <button class="btn btn-ghost" id="btn-regenerate">Coba kombinasi lain</button>
+        <button class="btn btn-gold" id="btn-style-ai">✨ Saran gaya &amp; aksesori AI</button>
+      </div>
+      <div class="style-note" id="style-note">
+        <div class="lbl">Saran dari AI</div>
+        <div id="style-note-text"></div>
+      </div>
     </div>
-  </div>
 
+    <div class="empty" id="rec-empty" style="margin-top:20px;">
+      <div class="display">Belum ada baju di lemari</div>
+      Isi lemari kamu dulu di tab <strong>+ Tambah baju</strong> biar Rak bisa mulai kasih saran.
+    </div>
+  </section>
+
+  <!-- ===================== TAB: LEMARI ===================== -->
+  <section id="lemari">
+    <div class="closet-toolbar">
+      <div class="filter-chips" id="filter-chips">
+        <div class="chip active" data-filter="semua">Semua</div>
+        <div class="chip" data-filter="atasan">Atasan</div>
+        <div class="chip" data-filter="bawahan">Bawahan</div>
+        <div class="chip" data-filter="outer">Outer</div>
+        <div class="chip" data-filter="sepatu">Sepatu</div>
+        <div class="chip" data-filter="aksesori">Aksesori</div>
+      </div>
+    </div>
+    <div class="closet-grid" id="closet-grid"></div>
+    <div class="empty" id="closet-empty" style="display:none;">
+      <div class="display">Lemari masih kosong</div>
+      Yuk mulai upload foto baju kamu di tab <strong>+ Tambah baju</strong>.
+    </div>
+  </section>
+
+  <!-- ===================== TAB: TAMBAH BAJU ===================== -->
+  <section id="tambah">
+    <div class="form-card">
+      <h3>Scan foto baju</h3>
+      <div class="desc">Upload sekaligus banyak foto — tiap foto otomatis dianalisis AI buat nentuin jenis, warna, dan tingkat formalitasnya. Cek hasilnya sebentar, betulin kalau ada yang meleset, baru simpan.</div>
+      <div class="bulk-drop" id="bulk-drop">
+        <div class="display" style="font-size:14px;">Klik atau drop foto di sini</div>
+        <div class="hint">Bisa pilih banyak file sekaligus · latar polos lebih akurat</div>
+        <input type="file" id="bulk-input" accept="image/*" multiple>
+      </div>
+      <div class="review-grid" id="review-grid"></div>
+      <div class="rec-actions" id="review-actions" style="display:none; margin-top:16px;">
+        <button class="btn btn-sage" id="btn-save-all">Simpan semua ke lemari</button>
+        <button class="btn btn-ghost" id="btn-clear-review">Batalkan</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-const exprEl = document.getElementById('expr');
-const resultEl = document.getElementById('result');
-const screenEl = document.getElementById('screen');
+(function(){
+  "use strict";
+  const STORAGE_KEY = "rak_closet_v1";
+  const CATEGORIES = ["atasan","bawahan","outer","sepatu","aksesori"];
+  const FORMALS = ["kasual","semi-formal","formal","olahraga"];
+  const COLORS = ["Hitam","Putih","Abu-abu","Krem","Cokelat","Navy","Biru","Hijau","Merah","Kuning","Pink","Ungu"];
+  const WEATHERS = ["panas","mendung","hujan","dingin ac"];
 
-let current = '0';
-let expression = '';
-let justEqualed = false;
+  let closet = loadCloset();
+  let currentFilter = "semua";
+  let lastRecommendation = null;
+  let reviewItems = []; // pending bulk-scan items awaiting confirmation
 
-function render(){
-  exprEl.textContent = expression || '\u00A0';
-  resultEl.textContent = current;
-}
-
-function input(val){
-  if(justEqualed){
-    current = '0';
-    expression = '';
-    justEqualed = false;
+  function loadCloset(){
+    try{ const raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : []; }catch(e){ return []; }
   }
-  if(current === '0' && val !== '.'){
-    current = val;
-  } else if(val === '.' && current.includes('.')){
-    return;
-  } else {
-    current += val;
+  function saveCloset(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(closet)); }
+  function uid(){ return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+  let toastTimer;
+  function showToast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> t.classList.remove('show'), 2600);
   }
-  render();
-}
 
-function inputOp(op){
-  if(justEqualed){
-    expression = current + ' ' + op + ' ';
-    justEqualed = false;
-  } else {
-    expression += current + ' ' + op + ' ';
+  // ---------------- tabs ----------------
+  document.querySelectorAll('nav.tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'lemari') renderCloset();
+      if(btn.dataset.tab === 'rekomendasi') renderRecEmptyState();
+    });
+  });
+
+  // ================= AI helpers =================
+  function dataUrlToParts(dataUrl){
+    const match = dataUrl.match(/^data:(.+?);base64,(.*)$/);
+    if(!match) return null;
+    return { mediaType: match[1], base64: match[2] };
   }
-  current = '0';
-  render();
-}
 
-function clearAll(){
-  current = '0';
-  expression = '';
-  justEqualed = false;
-  render();
-}
+  async function callClaude(contentBlocks){
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [ { role: "user", content: contentBlocks } ]
+      })
+    });
+    const data = await resp.json();
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    return textBlocks.join('\n').trim();
+  }
 
-function toggleSign(){
-  if(current === '0') return;
-  current = current.startsWith('-') ? current.slice(1) : '-' + current;
-  render();
-}
+  function parseJsonLoose(text){
+    const cleaned = text.replace(/```json/gi,'').replace(/```/g,'').trim();
+    try{ return JSON.parse(cleaned); }catch(e){ return null; }
+  }
 
-function percent(){
-  current = (parseFloat(current || '0') / 100).toString();
-  render();
-}
+  async function analyzePhoto(dataUrl){
+    const parts = dataUrlToParts(dataUrl);
+    if(!parts) return null;
+    const prompt = `Kamu asisten fashion. Lihat foto baju ini dan balas HANYA JSON valid, tanpa markdown, tanpa penjelasan, persis struktur ini:
+{"name":"nama baju singkat dalam Bahasa Indonesia","category":"salah satu dari: ${CATEGORIES.join(', ')}","formal":"salah satu dari: ${FORMALS.join(', ')}","color":"salah satu dari: ${COLORS.join(', ')}","weather":["array berisi satu atau lebih dari: ${WEATHERS.join(', ')}"]}`;
+    const content = [
+      { type: "image", source: { type: "base64", media_type: parts.mediaType, data: parts.base64 } },
+      { type: "text", text: prompt }
+    ];
+    try{
+      const text = await callClaude(content);
+      const parsed = parseJsonLoose(text);
+      if(!parsed) return null;
+      if(!CATEGORIES.includes(parsed.category)) parsed.category = "atasan";
+      if(!FORMALS.includes(parsed.formal)) parsed.formal = "kasual";
+      if(!COLORS.includes(parsed.color)) parsed.color = "Hitam";
+      if(!Array.isArray(parsed.weather) || parsed.weather.length===0) parsed.weather = ["panas","mendung"];
+      parsed.weather = parsed.weather.filter(w => WEATHERS.includes(w));
+      if(parsed.weather.length===0) parsed.weather = ["panas"];
+      return parsed;
+    }catch(e){ return null; }
+  }
 
-function equals(){
-  expression = expression + current;
-  current = 'Hello World!';
-  render();
-  justEqualed = true;
-}
+  async function getStyleAdvice(items, activity, weather){
+    const imageBlocks = items.filter(i=>i.photo).slice(0,5).map(i=>{
+      const parts = dataUrlToParts(i.photo);
+      return parts ? { type:"image", source:{type:"base64", media_type:parts.mediaType, data:parts.base64} } : null;
+    }).filter(Boolean);
+    const prompt = `Ini foto-foto kombinasi outfit yang mau dipakai untuk "${activity}" saat cuaca "${weather}". Tulis 2-4 kalimat santai dalam Bahasa Indonesia: komentari apakah kombinasinya sudah cocok, lalu sarankan satu aksesori atau sentuhan gaya tambahan (misal jenis kalung, jam tangan, topi, ikat pinggang, dll) yang bakal cocok sama warna dan gaya baju di foto. Tulis sebagai paragraf natural, jangan pakai list atau markdown.`;
+    const content = [...imageBlocks, {type:"text", text: prompt}];
+    try{ return await callClaude(content); }
+    catch(e){ return "Lagi gak bisa minta saran AI sekarang, coba lagi sebentar ya."; }
+  }
 
-document.querySelectorAll('button[data-val]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const val = btn.dataset.val;
-    if(['÷','×','−','+'].includes(val)){
-      inputOp(val);
-    } else {
-      input(val);
+  // ================= Bulk scan (Tambah baju) =================
+  const bulkInput = document.getElementById('bulk-input');
+  const reviewGrid = document.getElementById('review-grid');
+  const reviewActions = document.getElementById('review-actions');
+
+  bulkInput.addEventListener('change', async (e)=>{
+    const files = Array.from(e.target.files || []);
+    if(files.length === 0) return;
+    reviewActions.style.display = 'flex';
+
+    for(const file of files){
+      const dataUrl = await fileToDataUrl(file);
+      const tempId = uid();
+      reviewItems.push({ tempId, photo: dataUrl, loading: true, name:'', category:'atasan', formal:'kasual', color:'Hitam', weather:['panas'] });
+      renderReview();
+
+      analyzePhoto(dataUrl).then(result=>{
+        const idx = reviewItems.findIndex(r=>r.tempId===tempId);
+        if(idx === -1) return;
+        if(result){
+          reviewItems[idx] = { ...reviewItems[idx], ...result, loading:false };
+        } else {
+          reviewItems[idx].loading = false;
+          reviewItems[idx].scanFailed = true;
+        }
+        renderReview();
+      });
+    }
+    bulkInput.value = '';
+  });
+
+  function fileToDataUrl(file){
+    return new Promise((resolve)=>{
+      const reader = new FileReader();
+      reader.onload = ev => resolve(ev.target.result);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function renderReview(){
+    if(reviewItems.length === 0){ reviewGrid.innerHTML=''; reviewActions.style.display='none'; return; }
+    reviewGrid.innerHTML = reviewItems.map(item => {
+      if(item.loading){
+        return `<div class="review-card" data-temp="${item.tempId}">
+          <div class="scanning"><div class="spinner"></div></div>
+          <div style="font-size:11px; text-align:center; color:#767c80;">Menganalisis...</div>
+        </div>`;
+      }
+      const catOptions = CATEGORIES.map(c=>`<option value="${c}" ${c===item.category?'selected':''}>${c}</option>`).join('');
+      const formalOptions = FORMALS.map(f=>`<option value="${f}" ${f===item.formal?'selected':''}>${f}</option>`).join('');
+      const colorOptions = COLORS.map(c=>`<option value="${c}" ${c===item.color?'selected':''}>${c}</option>`).join('');
+      return `<div class="review-card" data-temp="${item.tempId}">
+        <div class="remove" data-remove="${item.tempId}">×</div>
+        <img src="${item.photo}">
+        ${item.scanFailed ? '<div class="err">Gagal auto-scan, isi manual ya</div>' : ''}
+        <input type="text" class="r-name" placeholder="Nama baju" value="${escapeHtml(item.name||'')}">
+        <select class="r-cat">${catOptions}</select>
+        <select class="r-formal">${formalOptions}</select>
+        <select class="r-color">${colorOptions}</select>
+      </div>`;
+    }).join('');
+  }
+
+  reviewGrid.addEventListener('click', (e)=>{
+    const rem = e.target.dataset.remove;
+    if(rem){
+      reviewItems = reviewItems.filter(r=>r.tempId !== rem);
+      renderReview();
     }
   });
-});
-
-document.querySelectorAll('button[data-action]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const action = btn.dataset.action;
-    if(action === 'clear') clearAll();
-    if(action === 'sign') toggleSign();
-    if(action === 'percent') percent();
-    if(action === 'equals') equals();
+  reviewGrid.addEventListener('input', (e)=>{
+    const card = e.target.closest('.review-card');
+    if(!card) return;
+    const tempId = card.dataset.temp;
+    const item = reviewItems.find(r=>r.tempId===tempId);
+    if(!item) return;
+    if(e.target.classList.contains('r-name')) item.name = e.target.value;
+    if(e.target.classList.contains('r-cat')) item.category = e.target.value;
+    if(e.target.classList.contains('r-formal')) item.formal = e.target.value;
+    if(e.target.classList.contains('r-color')) item.color = e.target.value;
   });
-});
 
-render();
+  document.getElementById('btn-clear-review').addEventListener('click', ()=>{
+    reviewItems = [];
+    renderReview();
+  });
+
+  document.getElementById('btn-save-all').addEventListener('click', ()=>{
+    const stillLoading = reviewItems.some(r=>r.loading);
+    if(stillLoading){ showToast('Masih ada foto yang lagi dianalisis, tunggu sebentar ya'); return; }
+    let saved = 0;
+    reviewItems.forEach(item=>{
+      closet.push({
+        id: uid(),
+        name: item.name && item.name.trim() ? item.name.trim() : 'Baju tanpa nama',
+        category: item.category,
+        formal: item.formal,
+        color: item.color,
+        weather: item.weather && item.weather.length ? item.weather : ['panas'],
+        photo: item.photo,
+        lastWorn: null,
+        wearCount: 0
+      });
+      saved++;
+    });
+    saveCloset();
+    reviewItems = [];
+    renderReview();
+    showToast(`${saved} baju tersimpan ke lemari ✓`);
+  });
+
+  // ================= Closet tab =================
+  document.getElementById('filter-chips').addEventListener('click', (e)=>{
+    if(!e.target.classList.contains('chip')) return;
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    e.target.classList.add('active');
+    currentFilter = e.target.dataset.filter;
+    renderCloset();
+  });
+
+  function cardHTML(item, withDelete){
+    const img = item.photo ? `<img src="${item.photo}" alt="${escapeHtml(item.name)}">` : `<div class="no-img">Tanpa foto</div>`;
+    return `<div class="tag-card" data-id="${item.id}">
+        <div class="string"></div><div class="hole"></div>
+        ${withDelete ? `<div class="del" data-del="${item.id}">×</div>` : ''}
+        ${img}
+        <div class="cat">${item.category}</div>
+        <div class="name">${escapeHtml(item.name)}</div>
+        <div class="meta">${item.color} · ${item.formal}</div>
+      </div>`;
+  }
+
+  function renderCloset(){
+    const grid = document.getElementById('closet-grid');
+    const empty = document.getElementById('closet-empty');
+    const items = currentFilter === 'semua' ? closet : closet.filter(i=>i.category===currentFilter);
+    if(closet.length === 0){ grid.style.display='none'; empty.style.display='block'; empty.querySelector('.display').textContent='Lemari masih kosong'; return; }
+    if(items.length === 0){ grid.style.display='none'; empty.style.display='block'; empty.querySelector('.display').textContent='Belum ada baju di kategori ini'; return; }
+    empty.style.display='none'; grid.style.display='grid';
+    grid.innerHTML = items.map(i=>cardHTML(i, true)).join('');
+  }
+
+  document.getElementById('closet-grid').addEventListener('click', (e)=>{
+    const delId = e.target.dataset.del;
+    if(delId){
+      closet = closet.filter(i=>i.id !== delId);
+      saveCloset();
+      renderCloset();
+      showToast('Baju dihapus dari lemari');
+    }
+  });
+
+  // ================= Recommendation engine (rule-based) =================
+  const ACTIVITY_FORMAL_MAP = {
+    "kuliah": ["kasual","semi-formal"],
+    "kerja/ngoding": ["kasual","semi-formal"],
+    "santai": ["kasual"],
+    "hangout": ["kasual","semi-formal"],
+    "acara formal": ["formal","semi-formal"],
+    "olahraga": ["olahraga"],
+    "ibadah": ["semi-formal","formal"]
+  };
+
+  function scoreItem(item, activity, weather, colorPref){
+    let score = 0;
+    const allowedFormal = ACTIVITY_FORMAL_MAP[activity] || ["kasual"];
+    if(allowedFormal.includes(item.formal)) score += 5; else score -= 3;
+    if(item.weather.includes(weather)) score += 4;
+    if(colorPref){
+      const pref = colorPref.toLowerCase();
+      if(item.color.toLowerCase().includes(pref)) score += 2;
+    }
+    if(!item.lastWorn) score += 2;
+    else{
+      const days = (Date.now() - item.lastWorn) / (1000*60*60*24);
+      score += Math.min(days/2, 3);
+    }
+    return score;
+  }
+
+  function pickBest(pool, activity, weather, colorPref, excludeIds){
+    const candidates = pool.filter(i => !excludeIds.includes(i.id));
+    if(candidates.length === 0) return null;
+    const scored = candidates.map(i => ({item:i, score: scoreItem(i, activity, weather, colorPref)}));
+    scored.sort((a,b)=> b.score - a.score);
+    const top = scored.filter(s => s.score >= scored[0].score - 2);
+    const pick = top[Math.floor(Math.random()*top.length)];
+    return pick ? pick.item : scored[0].item;
+  }
+
+  function generateOutfit(excludeIds){
+    excludeIds = excludeIds || [];
+    const activity = document.getElementById('inp-kegiatan').value;
+    const weather = document.getElementById('inp-cuaca').value;
+    const colorPref = document.getElementById('inp-warna').value.trim();
+    const byCategory = cat => closet.filter(i=>i.category===cat);
+
+    const atasan = pickBest(byCategory('atasan'), activity, weather, colorPref, excludeIds);
+    const bawahan = pickBest(byCategory('bawahan'), activity, weather, colorPref, excludeIds);
+    const sepatu = pickBest(byCategory('sepatu'), activity, weather, colorPref, excludeIds);
+    let outer = null;
+    if(weather === 'hujan' || weather === 'dingin ac'){
+      outer = pickBest(byCategory('outer'), activity, weather, colorPref, excludeIds);
+    }
+    const aksesori = pickBest(byCategory('aksesori'), activity, weather, colorPref, excludeIds);
+    const picked = [atasan, bawahan, sepatu, outer, aksesori].filter(Boolean);
+    return { picked, activity, weather, colorPref };
+  }
+
+  function noteFor(result){
+    const {picked, activity, weather, colorPref} = result;
+    if(picked.length === 0) return "Belum ketemu kombinasi yang pas — coba tambahin lebih banyak baju di tiap kategori (atasan, bawahan, sepatu) dulu ya.";
+    const parts = [];
+    parts.push(`Buat ${activity}${weather==='hujan' ? ' pas hujan' : weather==='panas' ? ' di cuaca panas' : ''}, ini kombinasi yang cocok.`);
+    const hasOuter = picked.some(p=>p.category==='outer');
+    if((weather==='hujan'||weather==='dingin ac') && !hasOuter) parts.push("Sayangnya belum ada outer yang cocok di lemari — mungkin waktunya nambahin jaket atau cardigan.");
+    if(colorPref){
+      const matched = picked.some(p=>p.color.toLowerCase().includes(colorPref.toLowerCase()));
+      if(matched) parts.push(`Ada sentuhan warna ${colorPref} sesuai request kamu.`);
+    }
+    const missing = ['atasan','bawahan','sepatu'].filter(cat => !picked.some(p=>p.category===cat));
+    if(missing.length) parts.push(`Kategori ${missing.join(', ')} masih kosong di lemari, jadi rekomendasinya belum lengkap.`);
+    return parts.join(' ');
+  }
+
+  function renderOutfit(result){
+    const wrap = document.getElementById('outfit-slots');
+    wrap.innerHTML = result.picked.length ? result.picked.map(i=>cardHTML(i,false)).join('') : '';
+    document.getElementById('outfit-note').textContent = noteFor(result);
+    document.getElementById('outfit-result').style.display = 'block';
+    document.getElementById('style-note').classList.remove('show');
+  }
+
+  document.getElementById('btn-generate').addEventListener('click', ()=>{
+    if(closet.length === 0){ showToast('Isi lemari kamu dulu ya'); return; }
+    lastRecommendation = generateOutfit([]);
+    renderOutfit(lastRecommendation);
+    lastRecommendation.picked.forEach(i=>{ i.lastWorn = Date.now(); i.wearCount++; });
+    saveCloset();
+  });
+
+  document.getElementById('btn-regenerate').addEventListener('click', ()=>{
+    const excludeIds = lastRecommendation ? lastRecommendation.picked.map(i=>i.id) : [];
+    let alt = generateOutfit(excludeIds);
+    if(alt.picked.length === 0) alt = generateOutfit([]);
+    lastRecommendation = alt;
+    renderOutfit(alt);
+  });
+
+  document.getElementById('btn-style-ai').addEventListener('click', async ()=>{
+    if(!lastRecommendation || lastRecommendation.picked.length === 0){ showToast('Cariin outfit dulu ya'); return; }
+    const btn = document.getElementById('btn-style-ai');
+    const noteBox = document.getElementById('style-note');
+    const noteText = document.getElementById('style-note-text');
+    btn.disabled = true;
+    btn.textContent = 'Lagi mikir...';
+    noteBox.classList.add('show');
+    noteText.textContent = 'AI lagi liatin foto outfit kamu...';
+    const advice = await getStyleAdvice(lastRecommendation.picked, lastRecommendation.activity, lastRecommendation.weather);
+    noteText.textContent = advice;
+    btn.disabled = false;
+    btn.textContent = '✨ Saran gaya & aksesori AI';
+  });
+
+  function renderRecEmptyState(){
+    document.getElementById('rec-empty').style.display = closet.length === 0 ? 'block' : 'none';
+  }
+
+  // ---------------- init ----------------
+  renderCloset();
+  renderRecEmptyState();
+})();
 </script>
-
 </body>
 </html>
