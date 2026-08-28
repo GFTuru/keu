@@ -121,7 +121,20 @@
       <h1>Rak</h1>
       <div class="sub">Lemari digital &amp; rekomendasi outfit harian</div>
     </div>
+    <button class="btn btn-ghost btn-small" id="btn-settings" type="button">⚙ API Key</button>
   </header>
+
+  <div class="form-card" id="settings-panel" style="display:none;">
+    <h3>Gemini API Key</h3>
+    <div class="desc">Dipakai buat scan foto otomatis &amp; saran gaya. Bikin gratis di <span style="text-decoration:underline;">aistudio.google.com/apikey</span>, tempel di sini. Key ini kesimpen di browser kamu sendiri (localStorage) — kalau repo GitHub-nya publik, siapapun yang lihat source bisa lihat key ini juga kalau kamu commit key-nya langsung ke kode, jadi mending isi manual tiap buka app, atau bikin repo private.</div>
+    <div class="field-row">
+      <div style="flex:2;">
+        <label>API Key</label>
+        <input type="text" id="gemini-key-input" placeholder="AIza...">
+      </div>
+    </div>
+    <button class="btn btn-gold btn-small" id="btn-save-key">Simpan key</button>
+  </div>
 
   <nav class="tabs">
     <button class="active" data-tab="rekomendasi">Mau kemana?</button>
@@ -283,20 +296,36 @@
     return { mediaType: match[1], base64: match[2] };
   }
 
-  async function callClaude(contentBlocks){
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+  function getGeminiKey(){ return localStorage.getItem('rak_gemini_key') || ''; }
+
+  async function callGemini(parts){
+    const key = getGeminiKey();
+    if(!key) throw new Error('no-key');
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 1000,
-        messages: [ { role: "user", content: contentBlocks } ]
-      })
+      body: JSON.stringify({ contents: [ { parts } ] })
     });
     const data = await resp.json();
-    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
-    return textBlocks.join('\n').trim();
+    if(data.error) throw new Error(data.error.message || 'gemini-error');
+    const parts2 = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+    return parts2.map(p=>p.text).filter(Boolean).join('\n').trim();
   }
+
+  // settings panel
+  const settingsPanel = document.getElementById('settings-panel');
+  const geminiKeyInput = document.getElementById('gemini-key-input');
+  geminiKeyInput.value = getGeminiKey();
+  document.getElementById('btn-settings').addEventListener('click', ()=>{
+    settingsPanel.style.display = settingsPanel.style.display === 'none' ? 'block' : 'none';
+  });
+  document.getElementById('btn-save-key').addEventListener('click', ()=>{
+    const val = geminiKeyInput.value.trim();
+    if(!val){ showToast('Isi API key dulu ya'); return; }
+    localStorage.setItem('rak_gemini_key', val);
+    showToast('API key tersimpan ✓');
+    settingsPanel.style.display = 'none';
+  });
 
   function parseJsonLoose(text){
     const cleaned = text.replace(/```json/gi,'').replace(/```/g,'').trim();
@@ -309,11 +338,11 @@
     const prompt = `Kamu asisten fashion. Lihat foto baju ini dan balas HANYA JSON valid, tanpa markdown, tanpa penjelasan, persis struktur ini:
 {"name":"nama baju singkat dalam Bahasa Indonesia","category":"salah satu dari: ${CATEGORIES.join(', ')}","formal":"salah satu dari: ${FORMALS.join(', ')}","color":"salah satu dari: ${COLORS.join(', ')}","weather":["array berisi satu atau lebih dari: ${WEATHERS.join(', ')}"]}`;
     const content = [
-      { type: "image", source: { type: "base64", media_type: parts.mediaType, data: parts.base64 } },
-      { type: "text", text: prompt }
+      { inline_data: { mime_type: parts.mediaType, data: parts.base64 } },
+      { text: prompt }
     ];
     try{
-      const text = await callClaude(content);
+      const text = await callGemini(content);
       const parsed = parseJsonLoose(text);
       if(!parsed) return null;
       if(!CATEGORIES.includes(parsed.category)) parsed.category = "atasan";
@@ -323,18 +352,24 @@
       parsed.weather = parsed.weather.filter(w => WEATHERS.includes(w));
       if(parsed.weather.length===0) parsed.weather = ["panas"];
       return parsed;
-    }catch(e){ return null; }
+    }catch(e){
+      if(e.message === 'no-key') showToast('Isi API key Gemini dulu ya (tombol ⚙ di atas)');
+      return null;
+    }
   }
 
   async function getStyleAdvice(items, activity, weather){
     const imageBlocks = items.filter(i=>i.photo).slice(0,5).map(i=>{
       const parts = dataUrlToParts(i.photo);
-      return parts ? { type:"image", source:{type:"base64", media_type:parts.mediaType, data:parts.base64} } : null;
+      return parts ? { inline_data: { mime_type: parts.mediaType, data: parts.base64 } } : null;
     }).filter(Boolean);
     const prompt = `Ini foto-foto kombinasi outfit yang mau dipakai untuk "${activity}" saat cuaca "${weather}". Tulis 2-4 kalimat santai dalam Bahasa Indonesia: komentari apakah kombinasinya sudah cocok, lalu sarankan satu aksesori atau sentuhan gaya tambahan (misal jenis kalung, jam tangan, topi, ikat pinggang, dll) yang bakal cocok sama warna dan gaya baju di foto. Tulis sebagai paragraf natural, jangan pakai list atau markdown.`;
-    const content = [...imageBlocks, {type:"text", text: prompt}];
-    try{ return await callClaude(content); }
-    catch(e){ return "Lagi gak bisa minta saran AI sekarang, coba lagi sebentar ya."; }
+    const content = [...imageBlocks, {text: prompt}];
+    try{ return await callGemini(content); }
+    catch(e){
+      if(e.message === 'no-key') return "Isi API key Gemini dulu ya lewat tombol ⚙ di atas.";
+      return "Lagi gak bisa minta saran AI sekarang, coba lagi sebentar ya.";
+    }
   }
 
   // ================= Bulk scan (Tambah baju) =================
@@ -345,6 +380,12 @@
   bulkInput.addEventListener('change', async (e)=>{
     const files = Array.from(e.target.files || []);
     if(files.length === 0) return;
+    if(!getGeminiKey()){
+      showToast('Isi API key Gemini dulu ya (tombol ⚙ di atas)');
+      settingsPanel.style.display = 'block';
+      bulkInput.value = '';
+      return;
+    }
     reviewActions.style.display = 'flex';
 
     for(const file of files){
